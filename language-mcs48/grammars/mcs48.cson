@@ -1,0 +1,43 @@
+# '^(([A-Z][A-Z0-9_]+))\\b' are labels
+# all other are obvious
+
+'scopeName': 'source.mcs48'
+'name': 'Mcs48'
+'fileTypes': [
+  'asm'
+  's'
+]
+'patterns': [
+   {
+       'match': 'SUB'
+       'name': 'asm.macro.green'
+   }
+   {
+       'match': '\\d\\b'
+       'name': 'register.number'
+   }
+   {
+       'match': '\\s[0-9]+[0-9a-fA-F]*[h|H|b|B]*\\s|[0-9][0-9A-F]+'
+       'name': 'constant.number'
+   }
+   {
+      'match' : ';.*'
+      'name' : 'comment.line.number-sign.simple'
+   }
+   {
+       'match': '\\s(ADD|ADDC|ANL|ANLD|CALL|CLR|CPL|DA|DEC|DIS|DJNZ|EN|ENT0|IN|INC|JB[0-7]|JC|JF[0-1]|JMP|JMPP|JNC|JNI|JNT[0-1]|JNZ|JTF|JT[0-1]|JZ|MOV|MOVD|MOVP|MOVP3|MOVX|NOP|ORL|ORLD|OUTL|RET|RETR|RL|RLC|RR|RRC|SEL|STOP|STRT|SWAP|XCH|XCHD|XRL)\\s'
+       'name': 'keyword.mnemonic'
+   }
+   {
+       'match': '\\s(\.EQU|\.ORG|\.DB|\.DW|\.TEXT|\.END)'
+       'name': 'keyword.control.directive'
+   }
+   {
+       'match': '^(([A-Z][A-Z0-9_]+))\\b'
+       'name': 'support.function.system'
+   }
+   {
+       'match': 'reserved'
+       'name': 'constant.numeric.c'
+   }
+]

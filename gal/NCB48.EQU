@@ -1,0 +1,48 @@
+; NCB48 logic
+; 8048 EA input switches to external program memory on HIGH.
+; 8155 RIOT 00..07h for IO (when IOM is high), 00..FFh for MEM (when IOM is low)
+; 8251 UART 08..09h and above
+; buttons for external or internal program memory change the EA pin state
+; (any) button push generates RESET for board
+
+CHIP NCD48 GAL16V8
+
+; GAL16V8 pinout DIP20
+; 01    02     03     04      05      06     07     08     09     10
+  /RD   /WR    /PSEN  A3     /BTNEA  /BTNIA /CSRAM /PREEX /PREIN  GND
+
+; 11    12     13     14      15      16     17     18     19     20
+  IOM  /RDRAM /WRRAM  /CSUSRT /CSRIOT EA    /IA     RESET /RESETN VCC
+
+EQUATIONS
+
+; READ signal for program MEM, PSEN - always, RD - as data only in
+; internal program mode and only with CSRAM to avoid conflict with RIOT 8155
+; program MEM read as data needed only for monitor program memory listing
+;RDRAM = PSEN + /EA * RD * CSRAM
+RDRAM = PSEN + RD * CSRAM
+
+; WRITE signal for program MEM - WR as data only in internal mode
+; needed to write INTEL HEX and modify interactively from monitor
+WRRAM = /EA * WR * CSRAM
+
+; chip select for RIOT 8155, exclusive with program MEM access
+; 00h - 07h for IO (when IOM is high), 00..FFh for MEM (when IOM is low)
+CSRIOT = /CSRAM *  IOM * /A3
+       + /CSRAM * /IOM
+
+; chip select for USART 8251, exclusive with program and external data MEM access
+; 08h - 09h (A0 high selects control register)
+CSUSRT = A3 * /CSRAM * IOM
+
+; RS flip flop, pins from buttons SET (external mem.) and RESET (internal mem.)
+; are active low one of the pins PREEX or PREIN is active on power on
+; it sets the flip flop to predefined state
+EA =  /EA * BTNEA
+    + /EA * PREEX
+    +  EA * /BTNIA * /PREIN
+IA = EA
+
+; RESET signal - active when one of the buttons is pressed, and on power up
+RESET  = BTNEA + BTNIA + PREEX + PREIN
+RESETN = BTNEA + BTNIA + PREEX + PREIN

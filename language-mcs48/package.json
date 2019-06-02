@@ -1,0 +1,14 @@
+{
+  "name": "language-mcs48",
+  "version": "0.0.1",
+  "description": "MCS-48 assembly grammar",
+  "keywords": [
+    "language",
+    "grammar"
+  ],
+  "repository": "https://github.com/atom/language-mcs48",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  }
+}
