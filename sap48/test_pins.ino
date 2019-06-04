@@ -2,6 +2,8 @@
 const PROGMEM char pin_name [11][4] = {"D0","D1","D2","D3","D4","D5","D6","D7","P20","P21","P22"};
 
 void test_submenu() {
+  Serial.println(F("REMOVE the chip before proceeding"));
+  Serial.println(F("Check there is no MICROCONTROLLER in programming socket!!"));
   Serial.println(F("Press D for data pin test or V programming voltages test"));
   do {
     byte_received = get_char();
@@ -84,8 +86,6 @@ void test_data_pin(int pin_number) {
 }
 
 void test_voltages() {
-  Serial.println(F("REMOVE the chip before proceeding"));
-  Serial.println(F("Check there is no MICROCONTROLLER in programming socket!!"));
   Serial.println(F("PROG must be 18V"));
   Serial.println(F("EA must be 5V"));
   Serial.println(F("VDD must be 5V"));

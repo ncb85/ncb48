@@ -14,13 +14,50 @@ bool check_chip_seated() {
   return byte_received == 'Y' || byte_received == 'y';
 }
 
-bool menu_program() {
-  if (chip_type == -1) {
-    Serial.println(F("Chip type not set"));
+bool check_chip_type() {
+  if (chip_type < 1) {
+    Serial.print(F("chip type not set"));
     return false;
   }
+  return true;
+}
+
+/*
+ * Program memory can be read using the verification mode. The processor is placed in read
+ * mode by applying a high voltage 21V for 8748H/8749H, 12V for 8048/8049 to the EA pin and
+ * 5V to T0 (874X only) input pin. RESET must be at 0V when voltage is applied to EA.
+ * The address of the location to be read is then applied to the lines of BUS and Port 2.
+ * The address is latched by a 0 to 1 transition on RESET and a high level on RESET causes
+ * the contents of the program memory location to apear on eight lines of BUS.
+ */
+void menu_verify() {
+  if (!(check_chip_type() && check_chip_seated())) {
+    return;
+  }
+  Serial.print(F("verifying ..."));
+  read_8748(false);
+}
+
+void menu_read() {
+  bool erased;
+  if (!(check_chip_type() && check_chip_seated())) {
+    return;
+  }
+  Serial.print(F("reading ..."));
+  erased = read_8748(true);
+  if (erased) {
+    Serial.println(F("Chip is erased, ready to be programmed."));
+  } else {
+    Serial.println(F("!!!Chip is not erased!!!"));
+  }
+}
+
+bool menu_program() {
   if (hex_file_loaded == false) {
     Serial.println(F("Hex file not loaded"));
+    return false;
+  }
+  if (!(check_chip_type() && check_chip_seated())) {
     return false;
   }
   program_8748();
@@ -60,7 +97,8 @@ char get_char() {
 }
 
  void print_menu() {
-  Serial.println(F("\n\nINTEL 8748/8749 programmer V1.0.0"));
+  Serial.print(F("\n\nINTEL 8748/8749 programmer "));
+  Serial.println(F(VERSION));
   Serial.println(F("Press: C to set chip type"));
   Serial.println(F("       T to jump to test pins and voltages submenu"));
   Serial.println(F("       L to load HEX file from PC to data buffer"));

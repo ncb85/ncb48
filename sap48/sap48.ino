@@ -35,6 +35,8 @@
   Using MEGA there is 8k of RAM available, which is enough to load data via Serial port
 */
 
+#define VERSION "1.1.0"
+
 // Pin assignments from Mega 2560 to the 8748/8749
 int DB0 = 32;      //DB0-DB7 are 8748 pins 12-19
 int DB1 = 34;
@@ -54,8 +56,7 @@ int VDD_H = 24;   // transistor switch for VDD high (8748 pin 26)
 int PROG_H = 26;  // transistor switch for PROG high (8748 pin 25)
 
 const int prog_size_8748 = 1024;
-byte data_prog[2048];/* = {0x31,0x00,0x20,0x3E,0xFF,0xC3,0x42,0x06,0xE3,0xEF,0xBE,0xC3,0x68,0x00,0x3E,0x0D,
-                        0xF5,0x3A,0x00,0x08,0xB7,0xC3,0x6C,0x06,0xCD,0x71,0x03,0xE5,0xC3,0x2D,0x03,0x57};*/
+byte data_prog[2048];
 
 int chip_type = -1;
 char byte_received, last_byte_received;

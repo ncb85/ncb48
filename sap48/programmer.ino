@@ -60,10 +60,10 @@ void output_address(int address) {
 }
 
 /*
- * print programminng error info
+ * print error info
  */
-void print_prog_error(byte a_byte, int address) {
-  Serial.print(F("ERROR ---> address = "));
+void print_error(byte a_byte, int address) {
+  Serial.print(F("\rERROR ---> address = "));
   Serial.print(address, HEX);
   Serial.print(F(" buffer byte = "));
   Serial.println(data_prog[address], HEX);
@@ -72,35 +72,8 @@ void print_prog_error(byte a_byte, int address) {
 }
 
 /*
- * Program memory can be read using the verification mode. The processor is placed in read
- * mode by applying a high voltage 21V for 8748H/8749H, 12V for 8048/8049 to the EA pin and
- * 5V to T0 (874X only) input pin. RESET must be at 0V when voltage is applied to EA.
- * The address of the location to be read is then applied to the lines of BUS and Port 2.
- * The address is latched by a 0 to 1 transition on RESET and a high level on RESET causes
- * the contents of the program memory location to apear on eight lines of BUS.
+ * read/verify memory
  */
-void menu_verify() {
-  if(!check_chip_seated()) {
-    return;
-  }
-  Serial.print(F("verifying ..."));
-  read_8748(false);
-}
-
-void menu_read() {
-  bool erased;
-  if(!check_chip_seated()) {
-    return;
-  }
-  Serial.print(F("reading ..."));
-  erased = read_8748(true);
-  if (erased) {
-    Serial.println(F("Chip is erased, ready to be programmed."));
-  } else {
-    Serial.println(F("!!!Chip is not erased!!!"));
-  }
-}
-
 bool read_8748(bool to_buffer) {
   bool erased = true;
   digitalWrite(PROG_H, LOW);    // PROG floating
@@ -111,11 +84,11 @@ bool read_8748(bool to_buffer) {
   delayMicroseconds(100);       // 8748 needs at least 4 clock cycles (~20 uS) to process each change
 
   int max_chip_address = prog_size_8748*chip_type;
-  int high_address = max_chip_address; //highest_address < max_chip_address ? highest_address : max_chip_address;
+  //int high_address = max_chip_address; //highest_address < max_chip_address ? highest_address : max_chip_address;
 
-  digitalWrite(EA_H, HIGH);     // EA = 21V for 874xHMOS(12V for 804x ROM, 25V for 8748 NMOS EPROM)
+  digitalWrite(EA_H, HIGH);     // EA = 21V for 874x HMOS (12V for 804x ROM, 25V for 8748 NMOS EPROM)
 
-  for (int i=0; i<high_address; i++) {
+  for (int i=0; i<max_chip_address; i++) {
     byte one_byte = read_byte(i);
     if (to_buffer) { // read mode
       data_prog[i] = one_byte;
@@ -143,7 +116,10 @@ bool read_8748(bool to_buffer) {
   return erased;
 }
 
-//--------------------------------------------------------------------------------------
+/*
+ * read byte from address
+ * param address
+ */
 byte read_byte(int address) {
   // Returns the EPROM byte at location "address".
   byte result;
@@ -188,9 +164,7 @@ byte read_byte(int address) {
 void program_8748() {
   byte programmed_byte;
   bool error_flag = false;
-  if(!check_chip_seated()) {
-    return;
-  }
+  int max_chip_address = prog_size_8748*chip_type;
   Serial.print(F("programming ..."));
 
   // Steps are from datasheet programming instructions.  Steps 1 and 2 already done in setup().
@@ -211,22 +185,22 @@ void program_8748() {
   digitalWrite(EA_H, HIGH);
   delay(1);
 
-  for (int address = 0; address < prog_size_8748*chip_type; address++) {
-    if (data_prog[address] == 0) {                  // skip zero bytes
+  for (int i = 0; i < max_chip_address; i++) {
+    if (data_prog[i] == 0) {                  // skip zero bytes
       continue;
     }
     // Step 5 (repeats from here for all program bytes): Address applied to BUS and P20-1.
     set_data_bus_direction(OUTPUT);
 
-    output_address(address);
-    delayMicroseconds(100);
+    output_address(i);
+    delay(1);
 
     // Step 6: RESET = 5V (latch address).
     digitalWrite(RESET, HIGH);
     delay(1);
 
     // Step 7: Data applied to BUS.
-    output_data(data_prog[address]);
+    output_data(data_prog[i]);
     delay(1);
 
     // Step 8: VDD = 21V (programming power).
@@ -248,10 +222,10 @@ void program_8748() {
     delay(1);
 
     // Step 12: Read and verify data on BUS.
-    programmed_byte = read_byte(-1);                // address already latched
-    if (programmed_byte != data_prog[address]) {
+    programmed_byte = read_byte(i);
+    if (programmed_byte != data_prog[i]) {
       error_flag = true;
-      print_prog_error(programmed_byte, address);
+      print_error(programmed_byte, i);
       break;    // abort programming
     }
 
@@ -262,8 +236,7 @@ void program_8748() {
     // Step 14:  RESET = OV and repeat from step 5.
     digitalWrite(RESET, LOW);
     delay(1);
-
-  }   // end loop
+  }
 
   // Step 15: Programmer should be at conditions of step 1 when 8748 is removed from socket.
   digitalWrite(TEST0, HIGH);    // 5V

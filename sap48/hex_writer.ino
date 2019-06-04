@@ -35,8 +35,7 @@ void send_hex() {
   int line_length, checksum;
   int max_chip_address = prog_size_8748*chip_type;
   int high_address = max_chip_address; //highest_address < max_chip_address ? highest_address : max_chip_address;
-  if (chip_type < 1) {
-    Serial.print(F("chip type not set"));
+  if (!check_chip_type()) {
     return;
   }
   for (int i=0; i<high_address;) {

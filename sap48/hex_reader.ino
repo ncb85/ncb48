@@ -1,4 +1,4 @@
-/**  
+/**
  *   Intel HEX file reader
  */
 #define HEX_RECORD 0
@@ -6,29 +6,29 @@
 
 unsigned long highest_address;
 
-/* 
+/*
  * convert two hex characters into a byte
- */    
+ */
 byte hex_conv (char *pstr) {
   if (!isxdigit (pstr [0]) || !isxdigit (pstr [1])) {
     Serial.println (F("Invalid hex digits"));
     Serial.flush();
     return -1;
   }
-  
+
   byte b = *pstr++ - '0';
   if (b > 9) { // A-F
     b -= 7;
   }
   // high-order nybble
   b <<= 4;
-  
+
   byte b1 = *pstr++ - '0';
   if (b1 > 9) {
     b1 -= 7;
   }
   b |= b1; // low order nybble
-  
+
   return b;
 }
 
@@ -41,11 +41,11 @@ char *get_two_digits() {
   return hexbuff;
 }
 
-/* 
+/*
  * returns false if error
  */
 bool read_line() {
-  unsigned int line_length, last_line_address, rec_type, checksum, filechksum, address;
+  unsigned int line_length, highest_line_address, rec_type, checksum, filechksum, address;
   int wrong_count = 0;
   // line start
   while ((byte_received = get_char())!= ':') { //skip newlines
@@ -55,7 +55,7 @@ bool read_line() {
      Serial.flush();
      return false;
     }
-  } 
+  }
   // length
   line_length = hex_conv(get_two_digits());
   checksum = line_length;
@@ -65,14 +65,23 @@ bool read_line() {
   address *= 256;
   address += hex_conv(get_two_digits());
   checksum += address%256;
-  last_line_address = address+line_length-1;
-  if (highest_address < last_line_address) {
-    highest_address = last_line_address;
+  highest_line_address = address+line_length-1;
+  rec_type = hex_conv(get_two_digits());
+  // highest address
+  if ((rec_type != EOF_RECORD) && (highest_address < highest_line_address)) {
+    highest_address = highest_line_address;
   }
   // record type
-  rec_type = hex_conv(get_two_digits());
   if (rec_type != HEX_RECORD && rec_type != EOF_RECORD) {
      return false;
+  }
+  // check chip address range
+  int max_chip_address = prog_size_8748*chip_type;
+  if (highest_address > max_chip_address) {
+      Serial.print(F("Record max address is beyond chip program size!"));
+      Serial.print(highest_address);
+      Serial.flush();
+      return false;
   }
   // data
   for (int i=0; i<line_length; i++) {
@@ -104,25 +113,27 @@ bool read_line() {
   }
   return true;
 }
-  
+
 bool load_hex() {
+  if (!check_chip_type()) {
+    return;
+  }
   int lineNumber = 0;
   highest_address = 0;
   hex_file_loaded = false;
-  Serial.println(F("load_hex"));
+  Serial.println(F("Waiting for HEX file"));
   Serial.flush();
   while (!hex_file_loaded) {
     if (!read_line()) {
       Serial.print(F(" - line number: "));
       Serial.println(lineNumber);
       Serial.flush();
+      break;
     }
     lineNumber++;
   }
-  Serial.println(F("\nHex file loaded"));
+  Serial.println(F("\r\nHex file loaded"));
   Serial.print(F("Highest address: "));
   Serial.println(highest_address);
   Serial.flush();
 }
-
-
