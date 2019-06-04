@@ -538,11 +538,11 @@ LASTLN		.ECHO "The size of the loader is "
 			.ECHO COMMDLS-LASTLN
 			.ECHO " bytes free.\n"
 			;
-			.ORG 03AEH
+			.ORG 03AFH
 COMMDLS		.TEXT "DIESMXGH\032\000"
 WLCMTXT		.DB 1BH,"[0m"			; reset terminal attributes
 			.DB	1BH,"[2J"			; clear console
 			.TEXT "MON48\r\n"
-			.TEXT "DUMP/SET D/S-prgm I/M-intl, E/X-exnl, GO G/H, Upload\000"
+			.TEXT "DUMP/SET D/S-prgm I/M-intl E/X-exnl, GO G/H, Upload\000"
 PRMTXT		.TEXT "\r\n\>\000"
 			.END
