@@ -13,6 +13,8 @@ void test_submenu() {
   } else {
     test_voltages();
   }
+  // put pins back into floating mode
+  set_data_bus_direction(INPUT);
 }
 
 void test_data_pins() {
@@ -80,8 +82,6 @@ void test_data_pin(int pin_number) {
     }
     delay(600);
   }
-  // set data pins to input
-  set_data_bus_direction(INPUT);
   Serial.println(F("end of pin test"));
 }
 

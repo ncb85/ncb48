@@ -81,10 +81,9 @@ bool read_8748(bool to_buffer) {
   digitalWrite(RESET, LOW);     // 0V
   digitalWrite(TEST0, LOW);     // address can be latched (and bus driven) only when programm mode active
   digitalWrite(EA_H, LOW);      // EA = 5V
-  delayMicroseconds(100);       // 8748 needs at least 4 clock cycles (~20 uS) to process each change
+  delay(1);                     // 8748 needs at least 4 clock cycles (~20 uS) to process each change
 
   int max_chip_address = prog_size_8748*chip_type;
-  //int high_address = max_chip_address; //highest_address < max_chip_address ? highest_address : max_chip_address;
 
   digitalWrite(EA_H, HIGH);     // EA = 21V for 874x HMOS (12V for 804x ROM, 25V for 8748 NMOS EPROM)
 
@@ -110,9 +109,9 @@ bool read_8748(bool to_buffer) {
   digitalWrite(EA_H, LOW);      // EA = 5V
   digitalWrite(PROG_H, LOW);    // PROG floating
   digitalWrite(RESET, LOW);     // 0V
-  Serial.println(F("EPROM read successfully."));
-  hex_file_loaded = true;
-
+  // put pins back into floating mode
+  set_data_bus_direction(INPUT);
+  hex_file_loaded = true;       // to be able to clone the chip
   return erased;
 }
 
@@ -129,10 +128,11 @@ byte read_byte(int address) {
   digitalWrite(PROG_H, LOW);
   delay(1);*/
 
-  if (address > 0) {
+  if (address > -1) {
       // put the address on the bus
+      set_data_bus_direction(OUTPUT);
       output_address(address);
-      delayMicroseconds(100);
+      delay(1);
 
       // latch address in 8748
       digitalWrite(RESET, HIGH);
@@ -153,9 +153,6 @@ byte read_byte(int address) {
   digitalWrite(RESET, LOW);
   digitalWrite(TEST0, LOW);
   delay(1);
-
-  // put pins back into output mode
-  set_data_bus_direction(OUTPUT);
 
   return result;
 }
@@ -191,7 +188,6 @@ void program_8748() {
     }
     // Step 5 (repeats from here for all program bytes): Address applied to BUS and P20-1.
     set_data_bus_direction(OUTPUT);
-
     output_address(i);
     delay(1);
 
@@ -215,7 +211,7 @@ void program_8748() {
 
     // Step 10: VDD = 5V.
     digitalWrite(VDD_H, LOW);
-    delayMicroseconds(100);
+    delay(1);
 
     // Step 11: TEST0 = 5V (verify mode).
     digitalWrite(TEST0, HIGH);
@@ -245,6 +241,9 @@ void program_8748() {
   digitalWrite(PROG_H, LOW);
   digitalWrite(EA_H, LOW);      // EA = 5V
 
+  // put pins back into floating mode
+  set_data_bus_direction(INPUT_PULLUP);
+  
   if (error_flag) {
     Serial.println(F("Exited with ERROR!"));
   } else {

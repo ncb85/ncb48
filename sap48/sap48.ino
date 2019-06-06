@@ -35,7 +35,7 @@
   Using MEGA there is 8k of RAM available, which is enough to load data via Serial port
 */
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.7"
 
 // Pin assignments from Mega 2560 to the 8748/8749
 int DB0 = 32;      //DB0-DB7 are 8748 pins 12-19
@@ -74,7 +74,9 @@ void setup() {
   pinMode(EA_H, OUTPUT);
   pinMode(VDD_H, OUTPUT);
   pinMode(PROG_H, OUTPUT);
-  //DB0-7 are bidirectional, so set their mode later.
+  // DB0-7 are bidirectional, so change their mode later.
+  // put pins into floating mode
+  set_data_bus_direction(INPUT);
 
   // Initial state from data sheet
   digitalWrite(TEST0, HIGH);    // 5V
