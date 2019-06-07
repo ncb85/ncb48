@@ -35,7 +35,7 @@
   Using MEGA there is 8k of RAM available, which is enough to load data via Serial port
 */
 
-#define VERSION "1.1.8"
+#define VERSION "1.2.2"
 
 // Pin assignments from Mega 2560 to the 8748/8749
 int DB0 = 32;      //DB0-DB7 are 8748 pins 12-19
@@ -69,6 +69,7 @@ void setup() {
   // Setup the Control-Pins
   pinMode(P20, OUTPUT);
   pinMode(P21, OUTPUT);
+  pinMode(P22, OUTPUT);
   pinMode(TEST0, OUTPUT);
   pinMode(RESET, OUTPUT);
   pinMode(EA_H, OUTPUT);

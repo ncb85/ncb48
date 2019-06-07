@@ -150,8 +150,8 @@ byte read_byte(int address) {
   result = read_bus();
 
   // turn off read mode
-  digitalWrite(RESET, LOW);
   digitalWrite(TEST0, LOW);
+  digitalWrite(RESET, LOW);
   delay(1);
 
   return result;
@@ -218,20 +218,15 @@ void program_8748() {
     delay(1);
 
     // Step 12: Read and verify data on BUS.
-    programmed_byte = read_byte(i);
+    programmed_byte = read_byte(-1);
     if (programmed_byte != data_prog[i]) {
       error_flag = true;
       print_error(programmed_byte, i);
       break;    // abort programming
     }
-
+    // steps 13,14 have been done in read_byte already
     // Step 13: TEST0 = 0V.
-    digitalWrite(TEST0, LOW);
-    delayMicroseconds(100);
-
     // Step 14:  RESET = OV and repeat from step 5.
-    digitalWrite(RESET, LOW);
-    delay(1);
   }
 
   // Step 15: Programmer should be at conditions of step 1 when 8748 is removed from socket.
