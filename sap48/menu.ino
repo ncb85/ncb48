@@ -36,6 +36,7 @@ void menu_verify() {
   }
   Serial.print(F("verifying ..."));
   read_8748(false);
+  Serial.print(F("\r"));
 }
 
 void menu_read() {
