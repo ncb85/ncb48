@@ -22,8 +22,8 @@ LF			.EQU 0AH
 CTRL_C		.EQU 03H
 BELL		.EQU 07H
 			; interrupt routines
-EXINTR		.EQU 803H				; ex.interrupt routine
-TCINTR		.EQU 807H				; timer interrupt routine
+EXINTR		.EQU 403H				; ex.interrupt routine
+TCINTR		.EQU 407H				; timer interrupt routine
 			; variables
 IHADDR		.EQU 126				; lower byte overlaps with previous variable
 			;
@@ -37,7 +37,6 @@ TIMR		SEL RB1					; select register bank 1
 			MOV R7,A				; backup A to R7
 			CALL TCINTR				; call routine
 			MOV A,R7				; restore A
-			SEL RB0					; select register bank 0
 			RETR 					; restore PC and PSW
 			;
 			; external interrupt
@@ -45,7 +44,6 @@ INTRPT		SEL RB1					; select register bank 1
 			MOV R7,A				; backup A to R7
 			CALL EXINTR				; call routine
 			MOV A,R7				; restore A
-			SEL RB0					; select register bank 0
 			RETR 					; restore PC and PSW
 			;
 			; 8251A initialisation, according to datasheet (3x 00h + RESET 040h)
@@ -522,11 +520,11 @@ CMD5		JMP SETM				; execute set internal memory
 CMD6		JMP SETE				; execute external data mem
 CMD9		JMP RCIHLEN				; load file, begins on ':' colon received
 			;
-			; call 400H address
+			; (G) call 400H address
 CMD7		CALL 400H				; jump to external program memory
 			JMP PSWREP				; report PSW
 			;
-			; call (GO) 800H address
+			; (H) call 800H address
 CMD8		SEL MB1					; to go above 2k boundary, bit A11 must be set
 			CALL 800H				; jump to external program memory, memory bank 1
 			SEL MB0					; reset flip-flop to lower 2k memory bank
