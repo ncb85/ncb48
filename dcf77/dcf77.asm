@@ -1,4 +1,10 @@
 ; archeocomp(2019) MCS-48 DCF-77 code
+; with crystal 4.9152MHz timer interrupts 40 times per seconds
+; as zero pulse is 100ms long and one pulse is 200ms long
+; four interrupts correspond to 100ms
+; thus 100ms pulses are sampled 4x, each sample is stored in shift register
+; 100ms pulse shoud set all 4 bits of shift register to ones
+; 200ms pulse shoud set all 8 bits of shift register to ones
 			;
 BEGIN		.EQU 400H				; begin address
 TSRADR		.EQU 0780H				; TSR address
@@ -56,6 +62,7 @@ BCCNS3		MOV A,R2				;   3  Else return count
 			RET						; return number of 1 in shift register
 			;
 			; process pulse - shift register contains last 8 pulses
+			; two nibbles represent last two pulses sampled four times
 			; count ones in both nibbles and detect transition at the beggining of each second
 			; detect 59th second - all zero
 PRPULS		MOV R4,A				; back up A
