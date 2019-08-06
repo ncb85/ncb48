@@ -3,8 +3,8 @@
 ; as zero pulse is 100ms long and one pulse is 200ms long
 ; four interrupts correspond to 100ms
 ; thus 100ms pulses are sampled 4x, each sample is stored in shift register
-; 100ms pulse shoud set all 4 bits of shift register to ones
-; 200ms pulse shoud set all 8 bits of shift register to ones
+; 100ms pulse should set all 4 bits of shift register to ones
+; 200ms pulse should set all 8 bits of shift register to ones
 			;
 BEGIN		.EQU 400H				; begin address
 TSRADR		.EQU 0780H				; TSR address
@@ -15,19 +15,22 @@ TXBYTE		.EQU 03CH
 			;
 ; macro for subtract instruction A=A-Rx
 #DEFINE SUB(Rx) CPL A \ ADD A,Rx \ CPL A
+#DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 			;
 			; hw constants
-;CRYSTAL		.EQU 6144000		; Hz
-CRYSTAL		.EQU 4915200			; Hz
+;CRYSTAL		.EQU 6144000		; Hz, timer interrupts 50 times per second
+CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
 			; variables
 PULSE_HIST	.EQU 127				; pulse samples history register
 SECOND		.EQU 126				; seconds
 MINUTE		.EQU 125				; minutes
 HOUR		.EQU 124				; hours
+CURR_STAT	.EQU 123				; current state
+PULS_LEN	.EQU 122				; current pulse length detected
 			;
 			; pulse constants
-PULSE_NONE	.EQU 0FFH				; no pulse detected
+PULSE_UNKN	.EQU 0FFH				; unknown pulse detected
 PULSE_ZERO	.EQU 00H				; zero pulse detected
 PULSE_ONE	.EQU 01H				; one pulse detected
 PULSE_59	.EQU 02H				; laste second detected
@@ -66,11 +69,27 @@ BCCNS3		MOV A,R2				;   3  Else return count
 			; count ones in both nibbles and detect transition at the beggining of each second
 			; detect 59th second - all zero
 PRPULS		MOV R4,A				; back up A
-			ANL A,#0FH				; get latest four samples
-			CALL BCCNSB				; count them
-			XCH A,R4				; exchange result and R4
 			ANL A,#0F0H				; get previuos four samples
 			CALL BCCNSB				; count them
+			XCH A,R4				; exchange result and R4
+			ANL A,#0FH				; get latest four samples
+			CALL BCCNSB				; count them latest four samples
+			MOV R2,A				; back up A (count of lower nibble ones)
+			MOV R0,#PULS_LEN		; get pulse length variable address to R0
+			SUBI(2)					; number of ones in current 100ms period less then 2?
+			JC PRPUL1				; yes, we have zero, continue
+			; is count above 2 (noise or in transition so ignore it)
+			MOV A,R2				; restore count of latest four samples
+			SUBI(3)					; more then 2 (3 or 4)?
+			JC PRPUE1				; no, unable to decide
+PRPUH1		; to do.. high sampled, was previous R4 low? we have beggining of new second, start measuring puls width
+			; was previous high? we are still within pulse, increment PULS_LEN
+PRPUL1		INC @R0					; increment length variable address
+			SUBI(SECOND)			; zero present longer then second?
+			JNC	PRPUL9				; no, it is not second nr.59
+			MOV R0,#CURR_STAT		; get current state variable address to R0
+			MOV @R0,#PULSE_59		; set new state, we have detected second nr.59
+PRPUL9		; was previuos R4 high ? we have end of pulse, get PULS_LEN and set for processing
 			RET						; return
 			;
 			; start
