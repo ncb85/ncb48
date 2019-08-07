@@ -83,6 +83,13 @@ PRPULS		MOV R4,A				; back up A
 			SUBI(3)					; more then 2 (3 or 4)?
 			JC PRPUE1				; no, unable to decide
 PRPUH1		; to do.. high sampled, was previous R4 low? we have beggining of new second, start measuring puls width
+			MOV A,R4				; restore count of previous four samples
+			SUBI(2)					; number of ones in current 100ms period less then 2?
+			JC PRPUH2				; yes, we have beggining of new second
+			INC @R0					; no, pulse still unfinished, increment length variable address
+			RET
+PRPUH2		MOV R0,#0				; start measuring pulse width
+			RET
 			; was previous high? we are still within pulse, increment PULS_LEN
 PRPUL1		INC @R0					; increment length variable address
 			SUBI(SECOND)			; zero present longer then second?
@@ -90,7 +97,13 @@ PRPUL1		INC @R0					; increment length variable address
 			MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_59		; set new state, we have detected second nr.59
 PRPUL9		; was previuos R4 high ? we have end of pulse, get PULS_LEN and set for processing
+			MOV A,R4				; restore count of previous four samples;
+			SUBI(3)					; more then 2 (3 or 4)?
+			JC PRPUE1				; no, unable to decide
+			; to do.. end of pulse,  get PULS_LEN and set for processing
 			RET						; return
+PRPUE1		; to do error
+			RET
 			;
 			; start
 MAIN		CLR A					; clear A
@@ -102,6 +115,20 @@ MAIN		CLR A					; clear A
 			RET						; return
 			;
 			.ORG TSRADR
+			; timer/counter interrupt, test input T0, last value of T0 input is in F1
+TCINTR		SEL RB1					; second register bank
+			MOV R7,A				; backup A
+			CLR C					; clear carry
+			JNT0 TCIN1				; jump on 1
+			CPL C					; set carry
+TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
+			MOV A,@R0				; pulse history to A
+			RLC A					; shift in pulse value to A bit 0
+			MOV A,@R0				; backup pulse history
+			CALL PRPULS				; process pulse
+			RETR					; restore PC and PSW
+			;
+			.END
 			; timer/counter interrupt, test input T0, last value of T0 input is in F1
 ;TCINTR		SEL RB1					; second register bank
 ;			MOV R7,A				; backup A
@@ -124,17 +151,3 @@ MAIN		CLR A					; clear A
 ;TCIN5
 ;			RETR					; restore PC and PSW
 			;
-			; timer/counter interrupt, test input T0, last value of T0 input is in F1
-TCINTR		SEL RB1					; second register bank
-			MOV R7,A				; backup A
-			CLR C					; clear carry
-			JNT0 TCIN1				; jump on 1
-			CPL C					; set carry
-TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
-			MOV A,@R0				; pulse history to A
-			RLC A					; shift in pulse value to A bit 0
-			MOV A,@R0				; backup pulse history
-			CALL PRPULS				; process pulse
-			RETR					; restore PC and PSW
-			;
-			.END
