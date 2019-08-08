@@ -18,7 +18,6 @@ TXBYTE		.EQU 03CH
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 			;
 			; hw constants
-;CRYSTAL		.EQU 6144000		; Hz, timer interrupts 50 times per second
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
 			; variables
@@ -33,6 +32,7 @@ PULS_LEN	.EQU 122				; current pulse length detected
 PULSE_UNKN	.EQU 0FFH				; unknown pulse detected
 PULSE_ZERO	.EQU 00H				; zero pulse detected
 PULSE_ONE	.EQU 01H				; one pulse detected
+PULSE_END	.EQU 01H				; end of pulse detected
 PULSE_59	.EQU 02H				; laste second detected
 			;
 			.ORG BEGIN				; reset vector
@@ -70,32 +70,42 @@ BCCNS3		MOV A,R2				;   3  Else return count
 			; detect 59th second - all zero
 PRPULS		MOV R4,A				; back up A
 			ANL A,#0F0H				; get previuos four samples
-			CALL BCCNSB				; count them
+			CALL BCCNSB				; count ones in previous four samples
 			XCH A,R4				; exchange result and R4
 			ANL A,#0FH				; get latest four samples
-			CALL BCCNSB				; count them latest four samples
+			CALL BCCNSB				; count ones in latest four samples
 			MOV R2,A				; back up A (count of lower nibble ones)
 			MOV R0,#PULS_LEN		; get pulse length variable address to R0
 			SUBI(2)					; number of ones in current 100ms period less then 2?
 			JC PRPUL1				; yes, we have zero, continue
-			; is count above 2 (noise or in transition so ignore it)
 			MOV A,R2				; restore count of latest four samples
-			SUBI(3)					; more then 2 (3 or 4)?
-			JC PRPUE1				; no, unable to decide
-PRPUH1		; to do.. high sampled, was previous R4 low? we have beggining of new second, start measuring puls width
-			MOV A,R4				; restore count of previous four samples
-			SUBI(2)					; number of ones in current 100ms period less then 2?
-			JC PRPUH2				; yes, we have beggining of new second
-			INC @R0					; no, pulse still unfinished, increment length variable address
+			SUBI(3)					; is count above 2 (3 or 4)?
+			JC PRPUE1				; no, unable to decide (noise or in transition so ignore it)
+PRPUH1		MOV A,R4				; restore count of previous four samples
+			SUBI(2)					; number of ones in previous 100ms period less then 2?
+			JC PRPUH2				; previous was low, we have beggining of new second
+			INC @R0					; previous was high, pulse still unfinished, increment length
 			RET
-PRPUH2		MOV R0,#0				; start measuring pulse width
+PRPUH2		MOV @R0,#0				; start measuring pulse width
 			RET
-			; was previous high? we are still within pulse, increment PULS_LEN
 PRPUL1		INC @R0					; increment length variable address
-			SUBI(SECOND)			; zero present longer then second?
+			MOV A,R4				; restore count of previous four samples
+			SUBI(2)					; number of ones in previous 100ms period less then 2?
+			JC PRPUL2				; yes, still no new pulse detected
+			JMP PRPUL2				; previous was high, we have end of pulse
+			MOV A,R2				; restore count of previous four samples
+			SUBI(3)					; is count above 2 (3 or 4)?
+			JC PRPUE1				; no, unable to decide (noise or in transition so ignore it)
+			RET
+PRPUL2		MOV @R0,#CURR_STAT		; get address of current state variable
+			MOV @R0,#PULSE_END		; set pulse end
+			RET
+			MOV A,@R0				; get pulse length
+			SUBI(SECOND)			; zero level present longer then second? (sec.59)
 			JNC	PRPUL9				; no, it is not second nr.59
 			MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_59		; set new state, we have detected second nr.59
+			RET
 PRPUL9		; was previuos R4 high ? we have end of pulse, get PULS_LEN and set for processing
 			MOV A,R4				; restore count of previous four samples;
 			SUBI(3)					; more then 2 (3 or 4)?
@@ -105,7 +115,7 @@ PRPUL9		; was previuos R4 high ? we have end of pulse, get PULS_LEN and set for 
 PRPUE1		; to do error
 			RET
 			;
-			; start
+			; program start
 MAIN		CLR A					; clear A
 			SEL RB1					; swith to alternate register bank
 			MOV R6,A				; clear ticks
