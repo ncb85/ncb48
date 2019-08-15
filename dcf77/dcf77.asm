@@ -32,9 +32,10 @@ PULS_LEN	.EQU 122				; current pulse length detected
 PULSE_UNKN	.EQU 0FFH				; unknown pulse detected
 PULSE_ZERO	.EQU 00H				; zero pulse detected
 PULSE_ONE	.EQU 01H				; one pulse detected
-PULSE_END	.EQU 01H				; end of pulse detected
-PULSE_59	.EQU 02H				; last second detected
-PULSE_ERR	.EQU 03H				; invalid input detected
+PULSE_BEGIN	.EQU 01H				; begin of pulse detected
+PULSE_END	.EQU 02H				; end of pulse detected
+PULSE_59	.EQU 03H				; last second detected
+PULSE_ERR	.EQU 04H				; invalid input detected
 			;
 			.ORG BEGIN				; reset vector
 			JMP MAIN				; jump to main routine
@@ -86,6 +87,8 @@ PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC PRPUH2				; previous was low, we have beggining of new second
 			INC @R0					; previous was high, pulse still unfinished, increment length
+			MOV @R0,#CURR_STAT		; get address of current state variable
+			MOV @R0,#PULSE_BEGIN	; set pulse begin
 			RET
 PRPUH2		MOV @R0,#0				; start measuring pulse width
 			RET
@@ -104,17 +107,11 @@ PRPUL2		MOV R0,#PULS_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
 			SUBI(TICKS)				; zero level present longer then second? (sec.59)
 			JNC	PRPUL9				; yes, it is second nr.59
-			; to do.. end of pulse,  get PULS_LEN and set for processing
-			; get PULS_LEN and set for processing
-			MOV A,R4				; restore count of previous four samples;
-			SUBI(3)					; more then 2 (3 or 4)?
-			JC PRPUE1				; no, unable to decide
 			RET
 PRPUL9		; second nr.59
 			MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_59		; set new state, we have detected second nr.59
-			JMP PRPUH2				; clear puls length and return
-			;RET						; return
+			RET						; return
 PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_ERR		; error state
 			RET
