@@ -85,12 +85,16 @@ PRPULS		MOV R4,A				; back up A
 			JC PRPUE1				; no, unable to decide (noise or in transition so ignore it)
 PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
-			JC PRPUH2				; previous was low, we have beggining of new second
+			JC PRPUH2				; previous was low, begin of new pulse (second)
 			INC @R0					; previous was high, pulse still unfinished, increment length
+			RET
+PRPUH2		MOV @R0,#PULS_LEN		; check low pulse length at least 800ms
+			MOV A,@R0				; get pulse length
+			SUBI(TICKS-TICKS*4/5+1)	; zero level present longer then 800ms? (completed pulse)
+			JC	PRPUE1				; yes, it is second nr.59
+			MOV @R0,#0				; start measuring pulse width
 			MOV @R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,#PULSE_BEGIN	; set pulse begin
-			RET
-PRPUH2		MOV @R0,#0				; start measuring pulse width
 			RET
 PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
@@ -99,7 +103,7 @@ PRPUL1		INC @R0					; increment length variable address
 			MOV A,R2				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC PRPUE1				; no, unable to decide (noise or in transition so ignore it)
-			; previous was high, we have end of pulse
+			; fall through			  previous was high, we have end of pulse
 			MOV @R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,#PULSE_END		; set pulse end
 			RET
