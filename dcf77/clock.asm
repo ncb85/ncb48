@@ -1,33 +1,4 @@
-; archeocomp(2019) MCS-48 clock code (terminate, stay resident)
-			;
-BEGIN		.EQU 400H				; begin address
-TSRADR		.EQU 0780H				; TSR address
-			;
-; macro for subtract instruction A=A-Rx
-#DEFINE SUB(Rx) CPL A \ ADD A,Rx \ CPL A
-			;
-			; hw constants
-;CRYSTAL		.EQU 9830400		; Hz
-CRYSTAL		.EQU 11059200			; Hz
-TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
-			; variables
-HOUR		.EQU 124				; hours
-MINUTE		.EQU 125				; minutes
-SECOND		.EQU 126				; seconds
-			;
-			.ORG BEGIN				; reset vector
-			JMP MAIN				; jump to main routine
-			.ORG BEGIN+3			; external interrupt input
-			JMP INTRPT				; jump to interrupt routine
-			.ORG BEGIN+7			; timer interrupt
-			; timer/counter interrupt
-TIMR		CALL TCINTR				; call routine
-			RETR 					; restore PC and PSW
-			;
-			; external interrupt
-INTRPT		;CALL EXINTR			; call routine
-			RETR 					; restore PC and PSW
-			;
+; archeocomp(2019) MCS-48 clock code 			;
 			; start
 MAIN		CLR A					; clear A
 			MOV R0,#HOUR			; hours address to R0

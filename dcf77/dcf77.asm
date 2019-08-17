@@ -40,8 +40,6 @@ PULSE_END	.EQU 02H				; end of pulse detected
 PULSE_59	.EQU 04H				; last second detected
 PULSE_ERR	.EQU 08H				; invalid input detected
 			;
-			#INCLUDE "timer.asm"	; pulse sampling - timer interrupt routine
-			;
 			.ORG BEGIN				; reset vector
 			JMP MAIN				; jump to main routine
 			.ORG BEGIN+3			; external interrupt input
@@ -49,10 +47,12 @@ PULSE_ERR	.EQU 08H				; invalid input detected
 			.ORG BEGIN+7			; timer interrupt
 			; timer/counter interrupt
 TIMR		JMP TCINTR				; call routine
-			;
 			; external interrupt
 INTRPT		RETR 					; restore PC and PSW
 			;
+			#INCLUDE "disp7seg.asm"	; seven segment display routines
+			#INCLUDE "timer.asm"	; pulse sampling - timer interrupt routines
+			#INCLUDE "clock.asm"	; clock counting routines
 			; program start
 MAIN		CLR A					; clear A
 			SEL RB1					; swith to alternate register bank
