@@ -9,7 +9,8 @@
 			.MODULE DCF77			; module name (for local _labels)
 			;
 BEGIN		.EQU 400H				; begin address
-TSRADR		.EQU 0780H				; TSR address
+TSRADR		.EQU 04E0H				; TSR address
+;TSRADR		.EQU 0780H				; TSR address
 			; monitor routines
 TXNIBB		.EQU 041H
 TXCHAR		.EQU 031H
@@ -23,6 +24,10 @@ TXBYTE		.EQU 03CH
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
 LOW_LEN		.EQU TICKS-(TICKS*4/5)+1 ; length of low (second) part of pulse
+DATA_PIN	.EQU 01H				; data pin of display
+CLOCK_PIN	.EQU 02H				; clock pin of display
+LATCH_PIN	.EQU 04H				; latch pin of display
+			;
 			; variables
 PULSE_HIST	.EQU 127				; pulse samples history register
 SECOND		.EQU 126				; seconds
@@ -53,14 +58,28 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "disp7seg.asm"	; seven segment display routines
 			#INCLUDE "timer.asm"	; pulse sampling - timer interrupt routines
 			#INCLUDE "clock.asm"	; clock counting routines
+			#INCLUDE "decode.asm"	; DCF-77 decoder routines
 			; program start
 MAIN		CLR A					; clear A
 			SEL RB1					; swith to alternate register bank
-			MOV R6,A				; clear ticks
+			;MOV R6,A				; clear ticks
 			SEL RB0					; back to standard register bank
-			STRT T					; start timer
-			EN TCNTI				; enable interrupt from timer
-			RET						; return
+
+			;MOV A,#10H
+			;CALL DISP_BCD
+			;CALL CLOC_INI
+			;CALL DISP_TIME
+			;RET
+
+			CALL CLOC_INI			; initialize clock
+			;STRT T					; start timer
+			;EN TCNTI				; enable interrupt from timer
+			JF1 _MAI1				; flag indicating new pulse is set
+			JMP _MAI2				; jump over
+_MAI1		;CALL DECODE				; decode latest pulse
+_MAI2		;CALL DISP_TIME			; display time
+			;JMP _MAI1				; loop
+			JMP $
 			;
 			.END
 			;
