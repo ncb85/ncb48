@@ -36,7 +36,7 @@ HOUR		.EQU 124				; hours
 CURR_STAT	.EQU 123				; current state
 PULSE_LEN	.EQU 122				; current pulse length detected
 			;
-			; pulse constants
+			; state constants
 PULSE_UNKN	.EQU 0FFH				; unknown pulse detected
 PULSE_ZERO	.EQU 00H				; zero pulse detected
 PULSE_ONE	.EQU 10H				; one pulse detected
@@ -44,6 +44,8 @@ PULSE_BEGIN	.EQU 01H				; begin of pulse detected
 PULSE_END	.EQU 02H				; end of pulse detected
 PULSE_59	.EQU 04H				; last second detected
 PULSE_ERR	.EQU 08H				; invalid input detected
+PULSE_VAL	.EQU 10H				; valid pulse
+DISP_REFR	.EQU 20H				; refresh display
 			;
 			.ORG BEGIN				; reset vector
 			JMP MAIN				; jump to main routine
@@ -77,9 +79,13 @@ MAIN		CLR A					; clear A
 			JF1 _MAI1				; flag indicating new pulse is set
 			JMP _MAI2				; jump over
 _MAI1		;CALL DECODE				; decode latest pulse
-_MAI2		;CALL DISP_TIME			; display time
-			;JMP _MAI1				; loop
-			JMP $
+_MAI2
+_MAI3		MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get CURR_STAT
+			JB5 _MAI4				; refresh display
+			JMP _MAI5
+_MAI4		CALL DISP_TIME			; display time
+_MAI5		JMP _MAI3
 			;
 			.END
 			;

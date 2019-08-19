@@ -38,7 +38,7 @@ PRPULS		MOV R4,A				; back up A
 			JC _PRPUL1				; yes, we have zero, continue
 			MOV A,R2				; restore count of latest four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
-			JC _PRPUE1				; no, unable to decide (noise or in transition so ignore it)
+			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
 _PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUH2				; previous was low, beginning of new pulse (second)
@@ -65,9 +65,8 @@ _PRPUL1		INC @R0					; increment length variable address
 			JC _PRPUL4				; yes, still no new pulse detected
 			MOV A,R2				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
-			JC _PRPUE1				; no, unable to decide (noise or in transition so ignore it)
-			 						; previous was high, we have end of pulse
-			MOV R0,#CURR_STAT		; get address of current state variable
+			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
+			MOV R0,#CURR_STAT		; previous was high, we have end of pulse, update current state
 			MOV @R0,#PULSE_END		; set pulse end, evaluate it
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
@@ -85,10 +84,9 @@ _PRPUL4		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			SUBI(TICKS)				; zero level present longer then second? (sec.59)
 			JNC	_PRPUL5				; yes, it is second nr.59
 			RET
-_PRPUL5		; second nr.59
-			MOV R0,#CURR_STAT		; get current state variable address to R0
+_PRPUL5		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_59		; set new state, we have detected second nr.59
-			RET						; return
+_PRPUI1		RET						; return
 _PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_ERR		; error state
 			RET
@@ -97,6 +95,7 @@ _PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
 			; timer/counter interrupt, fetch input T0
 TCINTR		SEL RB1					; second register bank
 			MOV R7,A				; backup A
+			JMP CLOC_INT			; process ticks
 			CLR C					; clear carry
 			JNT0 _TCIN1				; jump on 1
 			CPL C					; set carry
@@ -106,5 +105,4 @@ _TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
 			MOV A,@R0				; backup pulse history
 			CALL PRPULS				; process pulse
 			RETR					; restore PC and PSW
-			JMP CLOC_INT			; process ticks
 			;

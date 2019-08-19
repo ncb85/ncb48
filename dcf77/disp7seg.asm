@@ -38,6 +38,13 @@ DISP_TIME	MOV R0,#SECOND			; seconds address to R0
 			MOV A,@R0				; move hours to A
 			CALL DISP_BCD			; display HH
 			;TODO LATCH_PIN
+			MOV R0,#CURR_STAT		; get address of current state variable
+			XCH A,@R0				; exchange values (set CURR_STAT)
+			ANL A,#~DISP_REFR		; clear refresh display flag
+			XCH A,@R0				; exchange values (set CURR_STAT)
+			;
+			MOV R2,#'.'
+			CALL TXCHAR
 			RET
 			;
 			;.ORG 03E8H				; page 3 end
