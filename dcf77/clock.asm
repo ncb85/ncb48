@@ -17,10 +17,10 @@ CLOC_INT	INC R6					; ticks
 			MOV A,#TICKS			; ticks per second
 			SUB(R6)					; A=A-R6
 			JNZ _CLOC_IN1			; not yet one second
-			MOV A,#DISP_REFR		; refresh display once per second
 			MOV R0,#CURR_STAT		; get address of current state variable
-			ORL A,@R0				; combine values
-			MOV @R0,A				; set CURR_STAT
+			XCH A,@R0				; refresh display once per second
+			ORL A,#DISP_REFR		; combine values
+			XCH A,@R0				; set CURR_STAT
 			CLR A					; clear A
 			MOV R6,A				; clear ticks
 			MOV R0,#SECOND			; seconds address to R0
@@ -48,5 +48,6 @@ CLOC_INT	INC R6					; ticks
 			INC A					; increment hours
 			DA A					; decimal adjust
 			MOV @R0,A				; save hours
-_CLOC_IN1	RETR					; restore PC and PSW
+_CLOC_IN1	MOV A,R7				; restore A
+			RETR					; restore PC and PSW
 			;

@@ -74,8 +74,8 @@ MAIN		CLR A					; clear A
 			;RET
 
 			CALL CLOC_INI			; initialize clock
-			;STRT T					; start timer
-			;EN TCNTI				; enable interrupt from timer
+			STRT T					; start timer
+			EN TCNTI				; enable interrupt from timer
 			JF1 _MAI1				; flag indicating new pulse is set
 			JMP _MAI2				; jump over
 _MAI1		;CALL DECODE				; decode latest pulse

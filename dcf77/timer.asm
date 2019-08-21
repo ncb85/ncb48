@@ -104,5 +104,6 @@ _TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
 			RLC A					; shift in pulse value to A bit 0
 			MOV A,@R0				; backup pulse history
 			CALL PRPULS				; process pulse
+			MOV A,R7				; restore A
 			RETR					; restore PC and PSW
 			;
