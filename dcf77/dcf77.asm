@@ -19,6 +19,8 @@ TXBYTE		.EQU 03CH
 ; macro for subtract instruction A=A-Rx
 #DEFINE SUB(Rx) CPL A \ ADD A,Rx \ CPL A
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
+; macro for serial log
+#DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -81,6 +83,9 @@ MAIN		CLR A					; clear A
 _MAI1		;CALL DECODE				; decode latest pulse
 _MAI2
 _MAI3		MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get CURR_STAT
+			;JBx _MAI				; log pulse
+			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB5 _MAI4				; refresh display
 			JMP _MAI5

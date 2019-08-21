@@ -55,9 +55,11 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			JC	_PRPUE1				; invalid pulse, low state was too short
 			MOV @R0,#0				; start measuring pulse width
 			MOV R0,#CURR_STAT		; get address of current state variable
-			MOV @R0,#PULSE_BEGIN	; set pulse beginning
-			CLR F1					; set pulse valid flag F1
-			CPL F1					; pulse valid, start decoding
+			MOV A,#PULSE_BEGIN		; set pulse beginning
+			ORL A,@R0				; combine values
+			MOV @R0,A				; save new state
+			;CLR F1					; set pulse valid flag F1
+			;CPL F1					; pulse valid, start decoding
 			RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
@@ -67,7 +69,9 @@ _PRPUL1		INC @R0					; increment length variable address
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
 			MOV R0,#CURR_STAT		; previous was high, we have end of pulse, update current state
-			MOV @R0,#PULSE_END		; set pulse end, evaluate it
+			MOV A,#PULSE_END		; set pulse end, evaluate it
+			ORL A,@R0				; combine values
+			MOV @R0,A				; save new state
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
 			SUBI(6)					; is count above 5?
@@ -85,7 +89,9 @@ _PRPUL4		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			JNC	_PRPUL5				; yes, it is second nr.59
 			RET
 _PRPUL5		MOV R0,#CURR_STAT		; get current state variable address to R0
-			MOV @R0,#PULSE_59		; set new state, we have detected second nr.59
+			MOV A,#PULSE_59			; set new state, we have detected second nr.59
+			ORL A,@R0				; combine values
+			MOV @R0,A				; save new state
 _PRPUI1		RET						; return
 _PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_ERR		; error state
@@ -95,7 +101,7 @@ _PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
 			; timer/counter interrupt, fetch input T0
 TCINTR		SEL RB1					; second register bank
 			MOV R7,A				; backup A
-			JMP CLOC_INT			; process ticks
+			CALL CLOC_INT			; run the clock
 			CLR C					; clear carry
 			JNT0 _TCIN1				; jump on 1
 			CPL C					; set carry

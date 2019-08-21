@@ -2,7 +2,9 @@
 			; start
 CLOC_INI	CLR A					; clear A
 			MOV R0,#HOUR			; hours address to R0
+			MOV A,#9		;xx
 			MOV @R0,A				; clear hours
+			CLR A			;xx
 			INC R0					; R0 points to minutes
 			MOV @R0,A				; clear minutes
 			INC R0					; R0 points to seconds
@@ -20,7 +22,7 @@ CLOC_INT	INC R6					; ticks
 			MOV R0,#CURR_STAT		; get address of current state variable
 			XCH A,@R0				; refresh display once per second
 			ORL A,#DISP_REFR		; combine values
-			XCH A,@R0				; set CURR_STAT
+			MOV @R0,A				; set CURR_STAT
 			CLR A					; clear A
 			MOV R6,A				; clear ticks
 			MOV R0,#SECOND			; seconds address to R0
@@ -48,6 +50,7 @@ CLOC_INT	INC R6					; ticks
 			INC A					; increment hours
 			DA A					; decimal adjust
 			MOV @R0,A				; save hours
-_CLOC_IN1	MOV A,R7				; restore A
-			RETR					; restore PC and PSW
+_CLOC_IN1	RET
+			;MOV A,R7				; restore A
+			;RETR					; restore PC and PSW
 			;

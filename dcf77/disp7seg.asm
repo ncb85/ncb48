@@ -36,15 +36,19 @@ DISP_TIME	MOV R0,#SECOND			; seconds address to R0
 			CALL DISP_BCD			; display MM
 			DEC R0					; hours address to R0
 			MOV A,@R0				; move hours to A
-			CALL DISP_BCD			; display HH
-			;TODO LATCH_PIN
+			ANL A,#0F0H				; bigger than 10?
+			JNZ _DISP_TI2			; yes
+			CALL _DISP_B1			; no, display just lower digit
+			MOV A,#10				; space
+			CALL _DISP_B1			; display just lower digit
+			JMP _DISP_TI3			; latch and return
+_DISP_TI2	CALL DISP_BCD			; display HH
+_DISP_TI3	ORL P1,#LATCH_PIN		; set latch pin
+			ANL P1,#~LATCH_PIN		; clear latch pin
 			MOV R0,#CURR_STAT		; get address of current state variable
 			XCH A,@R0				; exchange values (set CURR_STAT)
 			ANL A,#~DISP_REFR		; clear refresh display flag
 			XCH A,@R0				; exchange values (set CURR_STAT)
-			;
-			MOV R2,#'.'
-			CALL TXCHAR
 			RET
 			;
 			;.ORG 03E8H				; page 3 end
