@@ -9,7 +9,7 @@
 			.MODULE DCF77			; module name (for local _labels)
 			;
 BEGIN		.EQU 400H				; begin address
-TSRADR		.EQU 04E0H				; TSR address
+TSRADR		.EQU 04E8H				; TSR address
 ;TSRADR		.EQU 0780H				; TSR address
 			; monitor routines
 TXNIBB		.EQU 041H
@@ -47,7 +47,7 @@ PULSE_END	.EQU 02H				; end of pulse detected
 PULSE_59	.EQU 04H				; last second detected
 PULSE_ERR	.EQU 08H				; invalid input detected
 PULSE_VAL	.EQU 10H				; valid pulse
-DISP_REFR	.EQU 20H				; refresh display
+DISP_REFR	.EQU 80H				; refresh display
 			;
 			.ORG BEGIN				; reset vector
 			JMP MAIN				; jump to main routine
@@ -59,35 +59,34 @@ TIMR		JMP TCINTR				; call routine
 			; external interrupt
 INTRPT		RETR 					; restore PC and PSW
 			;
-			#INCLUDE "disp7seg.asm"	; seven segment display routines
-			#INCLUDE "timer.asm"	; pulse sampling - timer interrupt routines
-			#INCLUDE "clock.asm"	; clock counting routines
-			#INCLUDE "decode.asm"	; DCF-77 decoder routines
+			#INCLUDE "disp7seg.asm"	; seven segment display
+			#INCLUDE "timer.asm"	; pulse sampling timer interrupt
+			#INCLUDE "clock.asm"	; clock counting
+			#INCLUDE "decode.asm"	; DCF-77 decoder
 			; program start
 MAIN		CLR A					; clear A
-			SEL RB1					; swith to alternate register bank
-			;MOV R6,A				; clear ticks
-			SEL RB0					; back to standard register bank
-
-			;MOV A,#10H
-			;CALL DISP_BCD
-			;CALL CLOC_INI
-			;CALL DISP_TIME
-			;RET
-
 			CALL CLOC_INI			; initialize clock
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
-			JF1 _MAI1				; flag indicating new pulse is set
-			JMP _MAI2				; jump over
 _MAI1		;CALL DECODE				; decode latest pulse
-_MAI2
-_MAI3		MOV R0,#CURR_STAT		; get address of current state variable
-			MOV A,@R0				; get CURR_STAT
-			;JBx _MAI				; log pulse
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
-			JB5 _MAI4				; refresh display
+			JB1 _MAI2				; log valid pulse
+			JB2 _MAI9				; log 59 second
+			JB3 _MAIERR				; log error pulse
+			JMP _MAI3
+_MAI2		JB0 _MAIX2
+			LOGI(0)					; zero pulse valid
+			JMP _MAI3
+_MAIX2		LOGI(1)					; one pulse valid
+			JMP _MAI3
+_MAIERR		LOGI(E)					; one pulse valid
+			JMP _MAI3
+_MAI9		LOGI(9)					; one pulse valid
+			JMP _MAI3
+_MAI3		MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get CURR_STAT
+			JB7 _MAI4				; refresh display
 			JMP _MAI5
 _MAI4		CALL DISP_TIME			; display time
 _MAI5		JMP _MAI3

@@ -1,10 +1,10 @@
-; archeocomp(2019) MCS-48 clock code 			;
-			; start
+; archeocomp(2019) MCS-48 clock code
+; clock counts HH MM SS in BCD code and ticks (in binary)
+;
+			; initialize clock
 CLOC_INI	CLR A					; clear A
 			MOV R0,#HOUR			; hours address to R0
-			MOV A,#9		;xx
 			MOV @R0,A				; clear hours
-			CLR A			;xx
 			INC R0					; R0 points to minutes
 			MOV @R0,A				; clear minutes
 			INC R0					; R0 points to seconds
