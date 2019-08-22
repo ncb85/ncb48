@@ -30,8 +30,7 @@ CLOC_INT	INC R6					; ticks
 			INC A					; increment seconds
 			DA A					; decimal adjust
 			MOV @R0,A				; save seconds
-			MOV R2,#60H				; 60s (one minute)
-			SUB(R2)					; A=A-R2
+			SUBI(60H)				; subtract 60s (one minute)
 			JNZ _CLOC_IN1			; not yet one minute
 			CLR A					; clear A
 			MOV @R0,A				; clear seconds
@@ -40,8 +39,7 @@ CLOC_INT	INC R6					; ticks
 			INC A					; increment minutes
 			DA A					; decimal adjust
 			MOV @R0,A				; save minutes
-			MOV R2,#60H				; 60m (one hour)
-			SUB(R2)					; A=A-R2
+			SUBI(60H)				; subtract 60m (one hour)
 			JNZ _CLOC_IN1			; not yet one hour
 			CLR A					; clear A
 			MOV @R0,A				; clear minutes
@@ -50,7 +48,9 @@ CLOC_INT	INC R6					; ticks
 			INC A					; increment hours
 			DA A					; decimal adjust
 			MOV @R0,A				; save hours
+			SUBI(24H)				; subtract 24h (one minute)
+			JNZ _CLOC_IN1			; not yet one minute
+			CLR A					; clear A
+			MOV @R0,A				; clear seconds
 _CLOC_IN1	RET
-			;MOV A,R7				; restore A
-			;RETR					; restore PC and PSW
 			;
