@@ -25,7 +25,7 @@ TXBYTE		.EQU 03CH
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
-LOW_LEN		.EQU TICKS-(TICKS*4/5)+1 ; length of low (second) part of pulse
+LOW_LEN		.EQU TICKS*4/5+1		; length of low (second) part of pulse
 DATA_PIN	.EQU 01H				; data pin of display
 CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
@@ -39,14 +39,11 @@ CURR_STAT	.EQU 123				; current state
 PULSE_LEN	.EQU 122				; current pulse length detected
 			;
 			; state constants
-PULSE_UNKN	.EQU 0FFH				; unknown pulse detected
-PULSE_ZERO	.EQU 00H				; zero pulse detected
-PULSE_ONE	.EQU 10H				; one pulse detected
-PULSE_BEGIN	.EQU 01H				; begin of pulse detected
-PULSE_END	.EQU 02H				; end of pulse detected
-PULSE_59	.EQU 04H				; last second detected
-PULSE_ERR	.EQU 08H				; invalid input detected
-PULSE_VAL	.EQU 10H				; valid pulse
+PULSE_ZERO	.EQU 00H				; value zero pulse
+PULSE_ONE	.EQU 10H				; value one pulse
+PULSE_VALID	.EQU 01H				; valid pulse detected
+PULSE_59	.EQU 02H				; last second detected
+PULSE_ERR	.EQU 04H				; invalid input detected
 DISP_REFR	.EQU 80H				; refresh display
 			;
 			.ORG BEGIN				; reset vector
@@ -71,25 +68,31 @@ MAIN		CLR A					; clear A
 _MAI1		;CALL DECODE				; decode latest pulse
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
-			JB1 _MAI2				; log valid pulse
-			JB2 _MAI9				; log 59 second
-			JB3 _MAIERR				; log error pulse
+			JB0 _MAI2				; log valid pulse
+			JB1 _MAI9				; log 59 second pulse
+			JB2 _MAIERR				; log error pulse
 			JMP _MAI3
-_MAI2		JB0 _MAIX2
+_MAI2		JB4 _MAIX2				; one or zero pulse?
+			ANL A,#~PULSE_VALID		; clear flag bit
+			MOV @R0,A				; set CURR_STAT
 			LOGI(0)					; zero pulse valid
 			JMP _MAI3
 _MAIX2		LOGI(1)					; one pulse valid
 			JMP _MAI3
-_MAIERR		LOGI(E)					; one pulse valid
+_MAIERR		;LOGI(E)					; one pulse valid
 			JMP _MAI3
 _MAI9		LOGI(9)					; one pulse valid
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get CURR_STAT
+			ANL A,#~PULSE_59		; clear flag bit
+			MOV @R0,A				; set CURR_STAT
 			JMP _MAI3
 _MAI3		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB7 _MAI4				; refresh display
 			JMP _MAI5
 _MAI4		CALL DISP_TIME			; display time
-_MAI5		JMP _MAI3
+_MAI5		JMP _MAI1
 			;
 			.END
 			;

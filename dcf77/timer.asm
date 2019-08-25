@@ -49,17 +49,14 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			ANL A,#PULSE_ONE		; ignore other bits
 			RR A					; divide by 2 (resulting in 4 or 0)
 			MOV R0,#PULSE_LEN		; check low pulse length at least 800ms
-			XCH A,@R0				; exchange values
-			ADD A,@R0
+			ADD A,@R0				; add length of high level period
 			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
 			JC	_PRPUE1				; invalid pulse, low state was too short
 			MOV @R0,#0				; start measuring pulse width
 			MOV R0,#CURR_STAT		; get address of current state variable
-			MOV A,#PULSE_BEGIN		; set pulse beginning
+			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
 			MOV @R0,A				; save new state
-			;CLR F1					; set pulse valid flag F1
-			;CPL F1					; pulse valid, start decoding
 			RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
@@ -68,10 +65,6 @@ _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R2				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
-			MOV R0,#CURR_STAT		; previous was high, we have end of pulse, update current state
-			MOV A,#PULSE_END		; set pulse end, evaluate it
-			ORL A,@R0				; combine values
-			MOV @R0,A				; save new state
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
 			SUBI(6)					; is count above 5?
@@ -91,7 +84,7 @@ _PRPUL4		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 _PRPUL5		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
-			MOV @R0,A				; save new state
+			;MOV @R0,A				; save new state
 _PRPUI1		RET						; return
 _PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,#PULSE_ERR		; error state
