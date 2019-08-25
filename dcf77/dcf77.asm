@@ -94,5 +94,8 @@ _MAI3		MOV R0,#CURR_STAT		; get address of current state variable
 _MAI4		CALL DISP_TIME			; display time
 _MAI5		JMP _MAI1
 			;
+			.ECHO "Size: "
+			.ECHO $
+			.ECHO "\n"			
 			.END
 			;
