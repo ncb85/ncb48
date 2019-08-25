@@ -51,6 +51,6 @@ CLOC_INT	INC R6					; ticks
 			SUBI(24H)				; subtract 24h (one minute)
 			JNZ _CLOC_IN1			; not yet one minute
 			CLR A					; clear A
-			MOV @R0,A				; clear seconds
+			MOV @R0,A				; clear hours
 _CLOC_IN1	RET
 			;

@@ -21,6 +21,7 @@ TXBYTE		.EQU 03CH
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 ; macro for serial log
 #DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
+#DEFINE LOGA() MOV R2,A \ CALL TXBYTE
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -62,6 +63,8 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "decode.asm"	; DCF-77 decoder
 			; program start
 MAIN		CLR A					; clear A
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV @R0,A				; clear CURR_STAT
 			CALL CLOC_INI			; initialize clock
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
@@ -70,7 +73,7 @@ _MAI1		;CALL DECODE				; decode latest pulse
 			MOV A,@R0				; get CURR_STAT
 			JB0 _MAI2				; log valid pulse
 			JB1 _MAI9				; log 59 second pulse
-			JB2 _MAIERR				; log error pulse
+			;JB2 _MAIERR				; log error pulse
 			JMP _MAI3
 _MAI2		JB4 _MAIX2				; one or zero pulse?
 			ANL A,#~PULSE_VALID		; clear flag bit
@@ -86,16 +89,16 @@ _MAI9		LOGI(9)					; one pulse valid
 			MOV A,@R0				; get CURR_STAT
 			ANL A,#~PULSE_59		; clear flag bit
 			MOV @R0,A				; set CURR_STAT
-			JMP _MAI3
+			;JMP _MAI3
 _MAI3		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB7 _MAI4				; refresh display
-			JMP _MAI5
+			JMP _MAI1
 _MAI4		CALL DISP_TIME			; display time
 _MAI5		JMP _MAI1
 			;
 			.ECHO "Size: "
 			.ECHO $
-			.ECHO "\n"			
+			.ECHO "\n"
 			.END
 			;

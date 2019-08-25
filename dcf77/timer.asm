@@ -42,7 +42,7 @@ PRPULS		MOV R4,A				; back up A
 _PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUH2				; previous was low, beginning of new pulse (second)
-			;INC @R0					; previous was high, pulse still unfinished, increment length
+			INC @R0					; previous was high, pulse still unfinished, increment length
 			RET
 _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get state (PULSE_ZERO or PULSE_ONE)
@@ -52,13 +52,13 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			ADD A,@R0				; add length of high level period
 			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
 			MOV @R0,#0				; start measuring pulse width
-			JC	_PRPUE1				; invalid pulse, low state was too short
+			JC _PRPUE1				; invalid pulse, low state was too short
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
 			MOV @R0,A				; save new state
 			RET
-_PRPUL1		;INC @R0					; increment length variable address
+_PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUL3				; yes, still no new pulse detected
