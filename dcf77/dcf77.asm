@@ -9,7 +9,7 @@
 			.MODULE DCF77			; module name (for local _labels)
 			;
 BEGIN		.EQU 400H				; begin address
-TSRADR		.EQU 04E8H				; TSR address
+TSRADR		.EQU 4F0H				; TSR address
 ;TSRADR		.EQU 0780H				; TSR address
 			; monitor routines
 TXNIBB		.EQU 041H
@@ -22,6 +22,7 @@ TXBYTE		.EQU 03CH
 ; macro for serial log
 #DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
 #DEFINE LOGA() MOV R2,A \ CALL TXBYTE
+#DEFINE SERA() MOV R0,#8 \ MOVX @R0,A 
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -38,6 +39,9 @@ MINUTE		.EQU 125				; minutes
 HOUR		.EQU 124				; hours
 CURR_STAT	.EQU 123				; current state
 PULSE_LEN	.EQU 122				; current pulse length detected
+
+COUNPR		.EQU 121
+COUNCU		.EQU 120
 			;
 			; state constants
 PULSE_ZERO	.EQU 00H				; value zero pulse
@@ -75,16 +79,16 @@ _MAI1		;CALL DECODE				; decode latest pulse
 			JB1 _MAI9				; log 59 second pulse
 			;JB2 _MAIERR				; log error pulse
 			JMP _MAI3
-_MAI2		JB4 _MAIX2				; one or zero pulse?
-			ANL A,#~PULSE_VALID		; clear flag bit
-			MOV @R0,A				; set CURR_STAT
-			LOGI(0)					; zero pulse valid
+_MAI2		ANL A,#~PULSE_VALID		; clear flag bit
+			MOV @R0,A				; clear pulse
+			JB4 _MAIX2				; one or zero pulse?
+			LOGI(_)
 			JMP _MAI3
-_MAIX2		LOGI(1)					; one pulse valid
+_MAIX2		LOGI(-)
 			JMP _MAI3
-_MAIERR		;LOGI(E)					; one pulse valid
+_MAIERR		;LOGI(E)
 			JMP _MAI3
-_MAI9		LOGI(9)					; one pulse valid
+_MAI9		LOGI($)
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			ANL A,#~PULSE_59		; clear flag bit

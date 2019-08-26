@@ -34,15 +34,16 @@ PRPULS		MOV R4,A				; back up A
 			CALL BCCNSB				; count ones in latest four samples
 			MOV R2,A				; back up A (count of lower nibble ones)
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
-			SUBI(2)					; number of ones in current 100ms period less then 2?
+			SUBI(2)					; number of ones in current 100ms period 0 or 1?
 			JC _PRPUL1				; yes, we have zero, continue
 			MOV A,R2				; restore count of latest four samples
-			SUBI(3)					; is count above 2 (3 or 4)?
+			SUBI(3)					; is number of ones 3 or 4?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
 _PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUH2				; previous was low, beginning of new pulse (second)
 			INC @R0					; previous was high, pulse still unfinished, increment length
+			MOV A,@R0
 			RET
 _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get state (PULSE_ZERO or PULSE_ONE)
@@ -62,7 +63,7 @@ _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUL3				; yes, still no new pulse detected
-			MOV A,R2				; restore count of previous four samples
+			MOV A,R4				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
@@ -100,7 +101,7 @@ TCINTR		SEL RB1					; second register bank
 _TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
 			MOV A,@R0				; pulse history to A
 			RLC A					; shift in pulse value to A bit 0
-			MOV A,@R0				; backup pulse history
+			MOV @R0,A				; backup pulse history
 			CALL PRPULS				; process pulse
 			MOV A,R7				; restore A
 			RETR					; restore PC and PSW
