@@ -24,10 +24,10 @@ _BCCNS3		MOV A,R2				;   3  Else return count
 			;
 			; process pulse - shift register contains last 8 pulses
 			; two nibbles represent last two pulses sampled four times
-			; count ones in both nibbles and detect transition at the beggining of each second
+			; count ones in both nibbles and detect transition at the beginning of each second
 			; detect 59th second - all zero
 PRPULS		MOV R4,A				; back up A
-			ANL A,#0F0H				; get previuos four samples
+			ANL A,#0F0H				; get previous four samples
 			CALL BCCNSB				; count ones in previous four samples
 			XCH A,R4				; exchange result and R4
 			ANL A,#0FH				; get latest four samples

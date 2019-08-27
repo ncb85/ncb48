@@ -22,7 +22,7 @@ TXBYTE		.EQU 03CH
 ; macro for serial log
 #DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
 #DEFINE LOGA() MOV R2,A \ CALL TXBYTE
-#DEFINE SERA() MOV R0,#8 \ MOVX @R0,A 
+#DEFINE SERA() MOV R0,#8 \ MOVX @R0,A
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -39,9 +39,9 @@ MINUTE		.EQU 125				; minutes
 HOUR		.EQU 124				; hours
 CURR_STAT	.EQU 123				; current state
 PULSE_LEN	.EQU 122				; current pulse length detected
-
-COUNPR		.EQU 121
-COUNCU		.EQU 120
+BIT_NUM		.EQU 121
+RAD_MIN		.EQU 120				; radio time minutes
+RAD_HOU		.EQU 119				; radio time hours
 			;
 			; state constants
 PULSE_ZERO	.EQU 00H				; value zero pulse
@@ -49,6 +49,7 @@ PULSE_ONE	.EQU 10H				; value one pulse
 PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
+RAD_ERR		.EQU 10H				; signal parity error
 DISP_REFR	.EQU 80H				; refresh display
 			;
 			.ORG BEGIN				; reset vector
@@ -64,7 +65,7 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "disp7seg.asm"	; seven segment display
 			#INCLUDE "timer.asm"	; pulse sampling timer interrupt
 			#INCLUDE "clock.asm"	; clock counting
-			#INCLUDE "decode.asm"	; DCF-77 decoder
+			#INCLUDE "decoder.asm"	; DCF-77 decoder
 			; program start
 MAIN		CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
@@ -72,7 +73,7 @@ MAIN		CLR A					; clear A
 			CALL CLOC_INI			; initialize clock
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
-_MAI1		;CALL DECODE				; decode latest pulse
+_MAI1		;MOV R0,#CURR_STAT RAD_ERR CALL DECODE				; decode latest pulse
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB0 _MAI2				; log valid pulse
