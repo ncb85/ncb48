@@ -22,7 +22,7 @@ TXBYTE		.EQU 03CH
 ; macro for serial log
 #DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
 #DEFINE LOGA() MOV R2,A \ CALL TXBYTE
-#DEFINE SERA() MOV R0,#8 \ MOVX @R0,A
+#DEFINE SERA(Val) MOV A,#'Val' \ MOV R0,#8 \ MOVX @R0,A
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -50,6 +50,7 @@ PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
 RAD_ERR		.EQU 10H				; signal parity error
+TIME_VAL	.EQU 40H				; radio time is valid
 DISP_REFR	.EQU 80H				; refresh display
 			;
 			.ORG BEGIN				; reset vector
@@ -82,11 +83,11 @@ _MAI1		;MOV R0,#CURR_STAT RAD_ERR CALL DECODE				; decode latest pulse
 			JMP _MAI3
 _MAI2		ANL A,#~PULSE_VALID		; clear flag bit
 			MOV @R0,A				; clear pulse
+			CLR F0					; clear F0
+			CPL F0					; set F0 - pulse value one
 			JB4 _MAIX2				; one or zero pulse?
-			LOGI(_)
-			JMP _MAI3
-_MAIX2		LOGI(-)
-			JMP _MAI3
+			CLR F0					; pulse value zero
+_MAIX2		JMP _MAI3
 _MAIERR		;LOGI(E)
 			JMP _MAI3
 _MAI9		LOGI($)

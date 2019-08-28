@@ -25,6 +25,13 @@ DECODE		MOV R0,#BIT_NUM			; get address of bit number
 			MOV A,@R0				; get bit number
 			MOV R2,A				; backup bit number
             INC @R0					; increment bit number
+
+			JF0 _SERH
+			SERA(_)
+			JMP _SERH2
+_SERH		LOGI(-)
+_SERH2		MOV A,R2
+
             JNZ _DECB20				; not very first bit
             JF0 _DECERR				; first bit always zero
 _DECB20		MOV R0,#RAD_MIN			; get address of minutes digit to R0
@@ -61,12 +68,14 @@ _DECP1		MOV A,@R0				; get hours digit
 			CALL BCCNSB				; count ones
 			ADDC A,#0				; add CY
 			JB0 _DECERR				; parity error
-			RET						; return
+			MOV A,R2				; restore bit number
+			SUBI(35)				; is it 35?
+			JNZ _DECEND				; no, return
+			MOV A,#TIME_VAL			; flag radio time valid
+			JMP _DECSTA				; set state
+_DECERR     MOV A,#RAD_ERR			; set error flag for radio frame
+_DECSTA		MOV R0,#CURR_STAT		; get address of status
+	    	ORL A,@R0				; combine values
 _DECSET	    MOV @R0,A				; set new value
 _DECEND		RET						; return
-_DECERR     MOV R0,#CURR_STAT		; get address of status
-	    	MOV A,#RAD_ERR			; set error flag for radio frame
-            ORL A,@R0				; combine values
-            MOV @R0,A				; set state
-            RET						;
 			;
