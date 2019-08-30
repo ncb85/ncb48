@@ -21,7 +21,7 @@ _SETBI2		RL A					; rotate A
 _SETBEN		RET						; return
 			;
 			; process bits - input value in F0
-DECODE		MOV R0,#BIT_NUM			; get address of bit number
+DECODE		MOV R0,#BIT_NUM			; address of bit number
 			MOV A,@R0				; get bit number
 			MOV R2,A				; backup bit number
             INC @R0					; increment bit number
@@ -73,7 +73,7 @@ _DECP1		MOV A,@R0				; get hours digit
 			JNZ _DECEND				; no, return
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-_DECERR     MOV A,#RAD_ERR			; set error flag for radio frame
+_DECERR     MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values
 _DECSET	    MOV @R0,A				; set new value

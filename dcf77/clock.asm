@@ -14,6 +14,20 @@ CLOC_INI	CLR A					; clear A
 			SEL RB0					; back to standard register bank
 			RET
 			;
+			; set decoded radio time as new clock time
+SETRADTIM	MOV R0,#RAD_HOU			; radio time hours
+			MOV R1,#HOUR				; clock time hours
+			MOV A,@R0				; get radio time hours
+			MOV @R1,A				; set clock time hours
+			INC R0					; move to minutes
+			INC R1					; move to minutes
+			MOV A,@R0				; get radio time minutes
+			MOV @R1,A				; set clock time minutes
+			INC R1					; move to seconds
+			CLR A					; clear A
+			MOV @R1,A				; set clock time seconds
+			RET
+			;
 			; timer/counter interrupt
 CLOC_INT	INC R6					; ticks
 			MOV A,#TICKS			; ticks per second

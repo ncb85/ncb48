@@ -10,7 +10,6 @@
 			;
 BEGIN		.EQU 400H				; begin address
 TSRADR		.EQU 4F0H				; TSR address
-;TSRADR		.EQU 0780H				; TSR address
 			; monitor routines
 TXNIBB		.EQU 041H
 TXCHAR		.EQU 031H
@@ -49,7 +48,7 @@ PULSE_ONE	.EQU 10H				; value one pulse
 PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
-RAD_ERR		.EQU 10H				; signal parity error
+ALL_DONE	.EQU 20H				; ready for new transmission
 TIME_VAL	.EQU 40H				; radio time is valid
 DISP_REFR	.EQU 80H				; refresh display
 			;
@@ -65,44 +64,56 @@ INTRPT		RETR 					; restore PC and PSW
 			;
 			#INCLUDE "disp7seg.asm"	; seven segment display
 			#INCLUDE "timer.asm"	; pulse sampling timer interrupt
-			#INCLUDE "clock.asm"	; clock counting
+			#INCLUDE "clock.asm"	; clock ticking
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
+			;
 			; program start
+			.ORG BEGIN+200H
 MAIN		CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
 			CALL CLOC_INI			; initialize clock
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
-_MAI1		;MOV R0,#CURR_STAT RAD_ERR CALL DECODE				; decode latest pulse
-			MOV R0,#CURR_STAT		; get address of current state variable
+_MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
-			JB0 _MAI2				; log valid pulse
-			JB1 _MAI9				; log 59 second pulse
-			;JB2 _MAIERR				; log error pulse
-			JMP _MAI3
-_MAI2		ANL A,#~PULSE_VALID		; clear flag bit
+			JB0 _VALPUL				; valid pulse
+			JB1 _SEC59				; 59 second pulse
+			JB7 _DISPTIM			; refresh display
+			JMP _MAILOP				; loop
+_DISPTIM	CALL DISP_TIME			; display time
+			JMP _MAILOP				; loop
+_VALPUL		ANL A,#~PULSE_VALID		; clear flag bit
 			MOV @R0,A				; clear pulse
 			CLR F0					; clear F0
 			CPL F0					; set F0 - pulse value one
-			JB4 _MAIX2				; one or zero pulse?
+			JB4 _VALPUL2			; pulse value one
 			CLR F0					; pulse value zero
-_MAIX2		JMP _MAI3
-_MAIERR		;LOGI(E)
-			JMP _MAI3
-_MAI9		LOGI($)
-			MOV R0,#CURR_STAT		; get address of current state variable
-			MOV A,@R0				; get CURR_STAT
-			ANL A,#~PULSE_59		; clear flag bit
+_VALPUL2	CALL DECODE				; decode pulses
+			JMP _MAILOP				; loop
+_SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
+			JB5 _MAILOP				; frame done before, nothing to do
+			; ALL_DONE not yet set, write data from reception frame
+			ANL A,#~PULSE_59		; clear sec59 bit
+			ORL A,#ALL_DONE			; set done bit(5)
 			MOV @R0,A				; set CURR_STAT
-			;JMP _MAI3
-_MAI3		MOV R0,#CURR_STAT		; get address of current state variable
+			SERA($)
+			MOV R0,#BIT_NUM			; address of bit number
+			CLR A					; clear A
+			MOV @R0,A				; clear bit number
+			MOV R0,#CURR_STAT		; address of current state variable
 			MOV A,@R0				; get CURR_STAT
-			JB7 _MAI4				; refresh display
-			JMP _MAI1
-_MAI4		CALL DISP_TIME			; display time
-_MAI5		JMP _MAI1
-			;
+			JB6 _SEC592				; flag TIME VALID set - new clock time
+			JMP _MAILOP				; loop
+_SEC592		ANL A,#~TIME_VAL		; clear flag
+			MOV @R0,A				; set CURR_STAT
+			CALL SETRADTIM			; set radio time as new time
+			SERA(t)
+			JMP _MAILOP				; loop
+_SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
+			MOV @R0,A				; set CURR_STAT
+			SERA(e)
+			JMP _MAILOP				; loop
 			.ECHO "Size: "
 			.ECHO $
 			.ECHO "\n"
