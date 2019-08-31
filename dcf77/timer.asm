@@ -1,6 +1,6 @@
-; archeocomp(2019) MCS-48 DCF-77 code
-; timer interrupt is used for pulse sampling and processing
-; each 100ms time period is sampled 4x
+; archeocomp(2019) MCS-48 DCF-77 pulse sampling code
+; timer interrupt 40Hz is used for pulse sampling and processing
+; each 100ms time period is sampled 4x, input T0
 			;
 			.MODULE TIMER			; module name (for local _labels)
 			;

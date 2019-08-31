@@ -21,7 +21,8 @@ TXBYTE		.EQU 03CH
 ; macro for serial log
 #DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
 #DEFINE LOGA() MOV R2,A \ CALL TXBYTE
-#DEFINE SERA(Val) MOV A,#'Val' \ MOV R0,#8 \ MOVX @R0,A
+#DEFINE SERI(Val) MOV A,#'Val' \ MOV R0,#8 \ MOVX @R0,A
+#DEFINE SERA() MOV R0,#8 \ MOVX @R0,A
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -32,15 +33,15 @@ CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
 			;
 			; variables
-PULSE_HIST	.EQU 127				; pulse samples history register
-SECOND		.EQU 126				; seconds
-MINUTE		.EQU 125				; minutes
-HOUR		.EQU 124				; hours
-CURR_STAT	.EQU 123				; current state
-PULSE_LEN	.EQU 122				; current pulse length detected
-BIT_NUM		.EQU 121
-RAD_MIN		.EQU 120				; radio time minutes
-RAD_HOU		.EQU 119				; radio time hours
+PULSE_HIST	.EQU 7FH				; pulse samples history register
+SECOND		.EQU 7EH				; seconds
+MINUTE		.EQU 7DH				; minutes
+HOUR		.EQU 7CH				; hours
+CURR_STAT	.EQU 7BH				; current state
+PULSE_LEN	.EQU 7AH				; current pulse length detected
+BIT_NUM		.EQU 79H
+RAD_MIN		.EQU 78H				; radio time minutes
+RAD_HOU		.EQU 77H				; radio time hours
 			;
 			; state constants
 PULSE_ZERO	.EQU 00H				; value zero pulse
@@ -97,22 +98,22 @@ _SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			ANL A,#~PULSE_59		; clear sec59 bit
 			ORL A,#ALL_DONE			; set done bit(5)
 			MOV @R0,A				; set CURR_STAT
-			SERA($)
 			MOV R0,#BIT_NUM			; address of bit number
-			CLR A					; clear A
+			MOV A,#-1				; counter
 			MOV @R0,A				; clear bit number
 			MOV R0,#CURR_STAT		; address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB6 _SEC592				; flag TIME VALID set - new clock time
 			JMP _MAILOP				; loop
-_SEC592		ANL A,#~TIME_VAL		; clear flag
+_SEC592		SERI($)
+			ANL A,#~TIME_VAL		; clear flag
 			MOV @R0,A				; set CURR_STAT
 			CALL SETRADTIM			; set radio time as new time
 			SERA(t)
 			JMP _MAILOP				; loop
 _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			MOV @R0,A				; set CURR_STAT
-			SERA(e)
+			SERI(e)
 			JMP _MAILOP				; loop
 			.ECHO "Size: "
 			.ECHO $

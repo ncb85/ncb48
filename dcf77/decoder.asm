@@ -25,27 +25,18 @@ DECODE		MOV R0,#BIT_NUM			; address of bit number
 			MOV A,@R0				; get bit number
 			MOV R2,A				; backup bit number
             INC @R0					; increment bit number
-
-			JF0 _SERH
-			SERA(_)
-			JMP _SERH2
-_SERH		LOGI(-)
-_SERH2		MOV A,R2
-
             JNZ _DECB20				; not very first bit
             JF0 _DECERR				; first bit always zero
-_DECB20		MOV R0,#RAD_MIN			; get address of minutes digit to R0
+_DECB20		MOV R0,#RAD_HOU			; get address of hours digit to R0
             SUBI(20)				; bit number 20 - always one
 			JNZ _DECH1				; not bit 20
 			JF0 _DECCLR				; clear HH and MM
 			JMP _DECERR				; error on not one
-			;CLR A					optimized out
 _DECCLR		MOV @R0,A				; clear radio minutes
-			DEC R0					; hours address
+			INC R0					; hours address
 			MOV @R0,A				; clear radio hours
-			JMP _DECEND				; return
-_DECH1		MOV R0,#RAD_HOU			; get address of hours digit to R0
-			MOV A,R2				; restore bit number
+			RET						; return
+_DECH1		MOV A,R2				; restore bit number
 			SUBI(35)				; more than 35?
 			JNC _DECEND				; yes, ignore
 			JZ _DECPA				; hours parity bit
@@ -53,15 +44,16 @@ _DECH1		MOV R0,#RAD_HOU			; get address of hours digit to R0
 			SUBI(28)				; more than 28?
 			JC _DECM1				; no, try minutes
 			JZ _DECPA				; minutes parity bit
-			CALL SETBIT				; update hours digits
-			JMP _DECSET				; set and return
-_DECM1		MOV A,R2				; restore bit number
+			DEC A					; adjust (hours >= bit nr.29)
+			JMP SETBIT				; update hours digits
+_DECM1		INC R0					; get address of minutes digit to R0
+			MOV A,R2				; restore bit number
 			SUBI(21)				; less than 21?
 			JC _DECEND				; yes, ignore
 			CALL SETBIT				; update minutes digits
-			JMP _DECEND				; return
+			RET						; return
 _DECPA		CLR C					; check parity - clear CY
-			CLR C					; set CY
+			CPL C					; set CY
 			JF0 _DECP1				; parity one
 			CPL C					; parity zero, clear CY
 _DECP1		MOV A,@R0				; get hours digit
@@ -73,9 +65,10 @@ _DECP1		MOV A,@R0				; get hours digit
 			JNZ _DECEND				; no, return
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-_DECERR     MOV A,#PULSE_ERR		; set error flag for radio frame
+_DECERR     ;SERI(!)
+			MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values
-_DECSET	    MOV @R0,A				; set new value
+	    	MOV @R0,A				; set new value
 _DECEND		RET						; return
 			;
