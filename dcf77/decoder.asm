@@ -23,7 +23,7 @@ _SETBEN		RET						; return
 			; process bits - input value in F0
 DECODE		MOV R0,#BIT_NUM			; address of bit number
 			MOV A,@R0				; get bit number
-			MOV R2,A				; backup bit number
+			MOV R4,A				; backup bit number
             INC @R0					; increment bit number
             JNZ _DECB20				; not very first bit
             JF0 _DECERR				; first bit always zero
@@ -36,18 +36,18 @@ _DECCLR		MOV @R0,A				; clear radio minutes
 			INC R0					; hours address
 			MOV @R0,A				; clear radio hours
 			RET						; return
-_DECH1		MOV A,R2				; restore bit number
+_DECH1		MOV A,R4				; restore bit number
 			SUBI(35)				; more than 35?
 			JNC _DECEND				; yes, ignore
 			JZ _DECPA				; hours parity bit
-			MOV A,R2				; restore bit number
+			MOV A,R4				; restore bit number
 			SUBI(28)				; more than 28?
 			JC _DECM1				; no, try minutes
 			JZ _DECPA				; minutes parity bit
 			DEC A					; adjust (hours >= bit nr.29)
 			JMP SETBIT				; update hours digits
 _DECM1		INC R0					; get address of minutes digit to R0
-			MOV A,R2				; restore bit number
+			MOV A,R4				; restore bit number
 			SUBI(21)				; less than 21?
 			JC _DECEND				; yes, ignore
 			CALL SETBIT				; update minutes digits
@@ -55,17 +55,18 @@ _DECM1		INC R0					; get address of minutes digit to R0
 _DECPA		CLR C					; check parity - clear CY
 			CPL C					; set CY
 			JF0 _DECP1				; parity one
-			CPL C					; parity zero, clear CY
+			CLR C					; parity zero, clear CY
 _DECP1		MOV A,@R0				; get hours digit
 			CALL BCCNSB				; count ones
 			ADDC A,#0				; add CY
 			JB0 _DECERR				; parity error
-			MOV A,R2				; restore bit number
+			MOV A,R4				; restore bit number
 			SUBI(35)				; is it 35?
 			JNZ _DECEND				; no, return
+			SERI(t)
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-_DECERR     ;SERI(!)
+_DECERR     SERI(!)
 			MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values
