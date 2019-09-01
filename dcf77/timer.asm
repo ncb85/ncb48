@@ -43,7 +43,7 @@ _PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUH2				; previous was low, beginning of new pulse (second)
 			INC @R0					; previous was high, pulse still unfinished, increment length
-			MOV A,@R0
+			MOV A,@R0				; set new length
 			RET
 _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get state (PULSE_ZERO or PULSE_ONE)
@@ -53,11 +53,16 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			ADD A,@R0				; add length of high level period
 			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
 			MOV @R0,#0				; start measuring pulse width
-			JC _PRPUE1				; invalid pulse, low state was too short
+			JC _PRPUE1				; no, unable to decide (maybe state after transition)
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
 			MOV @R0,A				; save new state
+			RET
+_PRPUE1		;SERI(s)
+			CLR A					; clear A
+			MOV R0,#CURR_STAT		; get current state variable address to R0
+			MOV @R0,A				; clear state
 			RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
@@ -81,17 +86,15 @@ _PRPUL3		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			SUBI(TICKS)				; zero level present longer then second? (sec.59)
 			JNC	_PRPUL4				; yes, it is second nr.59
 			RET
-_PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
+_PRPUL4		;SERI(z)
+			MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
 			ANL A,#~PULSE_ERR		; clear error flag
+			ANL A,#~ALL_DONE		; clear done flag
 			MOV @R0,A				; save new state
 _PRPUI1		RET						; return
-_PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
-			MOV @R0,#PULSE_ERR		; error state
-			RET
 			;
-			.ORG TSRADR
 			; timer/counter interrupt, fetch input T0
 TCINTR		SEL RB1					; second register bank
 			MOV R7,A				; backup A

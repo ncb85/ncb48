@@ -5,29 +5,22 @@
 ; thus 100ms pulses are sampled 4x, each sample is stored in shift register
 ; 100ms pulse should set all 4 bits of shift register to ones
 ; 200ms pulse should set all 8 bits of shift register to ones
-			;
-			.MODULE DCF77			; module name (for local _labels)
-			;
-BEGIN		.EQU 400H				; begin address
-TSRADR		.EQU 4F0H				; TSR address
-			; monitor routines
-TXNIBB		.EQU 041H
-TXCHAR		.EQU 031H
-TXBYTE		.EQU 03CH
-			;
+;
 ; macro for subtract instruction A=A-Rx
 #DEFINE SUB(Rx) CPL A \ ADD A,Rx \ CPL A
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 ; macro for serial log
-#DEFINE LOGI(Val) MOV R2,#'Val' \ CALL TXCHAR
-#DEFINE LOGA() MOV R2,A \ CALL TXBYTE
-#DEFINE SERI(Val) MOV A,#'Val' \ MOV R0,#8 \ MOVX @R0,A
-#DEFINE SERA() MOV R0,#8 \ MOVX @R0,A
+#DEFINE LOGA() CALL LOGACC
+#DEFINE LOGI(Val) MOV R7,A \ MOV A,#'Val' \ CALL LOGIMD \ MOV A,R7
+			;
+			.MODULE DCF77			; module name (for local _labels)
+			;
+BEGIN		.EQU 400H				; begin address
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
-LOW_LEN		.EQU TICKS*4/5+1		; length of low (second) part of pulse
+LOW_LEN		.EQU TICKS*4/5-1		; length of low (second) part of pulse
 DATA_PIN	.EQU 01H				; data pin of display
 CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
@@ -69,7 +62,7 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
 			;
 			; program start
-			.ORG BEGIN+200H
+			.ORG BEGIN+1F8H
 MAIN		CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
@@ -90,7 +83,11 @@ _VALPUL		ANL A,#~PULSE_VALID		; clear flag bit
 			CPL F0					; set F0 - pulse value one
 			JB4 _VALPUL2			; pulse value one
 			CLR F0					; pulse value zero
-_VALPUL2	CALL DECODE				; decode pulses
+_VALPUL2
+			LOGI( )
+			LOGA()
+
+			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
 _SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			JB5 _MAILOP				; frame done before, nothing to do
@@ -105,18 +102,19 @@ _SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV A,@R0				; get CURR_STAT
 			JB6 _SEC592				; flag TIME VALID set - new clock time
 			JMP _MAILOP				; loop
-_SEC592		SERI($)
+_SEC592		;LOGI($)
 			ANL A,#~TIME_VAL		; clear flag
 			MOV @R0,A				; set CURR_STAT
 			CALL SETRADTIM			; set radio time as new time
-			SERA(t)
+			;LOGI(t)
 			JMP _MAILOP				; loop
 _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			MOV @R0,A				; set CURR_STAT
-			SERI(e)
+			;LOGI(e)
 			JMP _MAILOP				; loop
 			.ECHO "Size: "
-			.ECHO $
+			.ECHO $-BEGIN
 			.ECHO "\n"
+			#INCLUDE "debug.asm"	; DCF-77 decoder
 			.END
 			;

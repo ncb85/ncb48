@@ -62,11 +62,13 @@ _DECP1		MOV A,@R0				; get hours digit
 			JB0 _DECERR				; parity error
 			MOV A,R4				; restore bit number
 			SUBI(35)				; is it 35?
+			;LOGI(p)
+			;LOGA()
 			JNZ _DECEND				; no, return
-			SERI(t)
+			;LOGI(t)
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-_DECERR     SERI(!)
+_DECERR     ;LOGI(!)
 			MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values
