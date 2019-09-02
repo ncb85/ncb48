@@ -38,8 +38,8 @@ _DECCLR		MOV @R0,A				; clear radio minutes
 			RET						; return
 _DECH1		MOV A,R4				; restore bit number
 			SUBI(35)				; more than 35?
-			JNC _DECEND				; yes, ignore
 			JZ _DECPA				; hours parity bit
+			JNC _DECEND				; yes, ignore
 			MOV A,R4				; restore bit number
 			SUBI(28)				; more than 28?
 			JC _DECM1				; no, try minutes
@@ -62,13 +62,10 @@ _DECP1		MOV A,@R0				; get hours digit
 			JB0 _DECERR				; parity error
 			MOV A,R4				; restore bit number
 			SUBI(35)				; is it 35?
-			;LOGI(p)
-			;LOGA()
 			JNZ _DECEND				; no, return
-			;LOGI(t)
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-_DECERR     ;LOGI(!)
+_DECERR     LOGI(!)
 			MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values

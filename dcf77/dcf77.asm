@@ -42,6 +42,7 @@ PULSE_ONE	.EQU 10H				; value one pulse
 PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
+PULSE_DONE	.EQU 08H				; pulse processed
 ALL_DONE	.EQU 20H				; ready for new transmission
 TIME_VAL	.EQU 40H				; radio time is valid
 DISP_REFR	.EQU 80H				; refresh display
@@ -77,7 +78,8 @@ _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
 			JMP _MAILOP				; loop
 _DISPTIM	CALL DISP_TIME			; display time
 			JMP _MAILOP				; loop
-_VALPUL		ANL A,#~PULSE_VALID		; clear flag bit
+_VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
+			ORL A,#PULSE_DONE		; set processed bit
 			MOV @R0,A				; clear pulse
 			CLR F0					; clear F0
 			CPL F0					; set F0 - pulse value one
@@ -102,15 +104,13 @@ _SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV A,@R0				; get CURR_STAT
 			JB6 _SEC592				; flag TIME VALID set - new clock time
 			JMP _MAILOP				; loop
-_SEC592		;LOGI($)
-			ANL A,#~TIME_VAL		; clear flag
+_SEC592		ANL A,#~TIME_VAL		; clear flag
 			MOV @R0,A				; set CURR_STAT
 			CALL SETRADTIM			; set radio time as new time
-			;LOGI(t)
+			LOGI(t)
 			JMP _MAILOP				; loop
 _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			MOV @R0,A				; set CURR_STAT
-			;LOGI(e)
 			JMP _MAILOP				; loop
 			.ECHO "Size: "
 			.ECHO $-BEGIN

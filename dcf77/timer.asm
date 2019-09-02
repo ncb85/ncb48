@@ -57,12 +57,14 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
+			ANL A,#~PULSE_DONE		; clear processed bit
 			MOV @R0,A				; save new state
 			RET
-_PRPUE1		;SERI(s)
-			CLR A					; clear A
-			MOV R0,#CURR_STAT		; get current state variable address to R0
-			MOV @R0,A				; clear state
+_PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
+			MOV A,@R0				; get state
+			?ANL A,#~PULSE_VALID		; clear valid pulse
+			?ANL A,#~ALL_DONE		; clear done flag
+			MOV @R0,A				; set state
 			RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
@@ -74,20 +76,21 @@ _PRPUL1		INC @R0					; increment length variable address
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
 			SUBI(6)					; is count above 5?
-			MOV A,#PULSE_ONE		; PULSE_ONE
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get current state
 			JNC _PRPUL2				; yes, it is long pulse e.g. PULSE_ONE
-			MOV A,#PULSE_ZERO		; no, PULSE_ZERO
-_PRPUL2		MOV R0,#CURR_STAT		; get address of current state variable
-			ORL A,@R0				; combine values
-			XCH A,@R0				; exchange values (set CURR_STAT)
+			ANL A,#~PULSE_ONE		; no PULSE_ZERO, clear value bit
+			MOV @R0,A				; set CURR_STAT
+			RET
+_PRPUL2		ORL A,#PULSE_ONE		; PULSE_ONE, set value bit
+			MOV @R0,A				; set CURR_STAT
 			RET
 _PRPUL3		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
 			SUBI(TICKS)				; zero level present longer then second? (sec.59)
 			JNC	_PRPUL4				; yes, it is second nr.59
 			RET
-_PRPUL4		;SERI(z)
-			MOV R0,#CURR_STAT		; get current state variable address to R0
+_PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
 			ANL A,#~PULSE_ERR		; clear error flag
