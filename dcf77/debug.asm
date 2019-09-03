@@ -10,6 +10,21 @@ IOM8155		.EQU 00010000B			; P2.4 data/ram 8155 select
 CTRUART		.EQU 09H				; UART control register
 BACK_A		.EQU 0FFH				; register backup area FF-F9 in RIOT
 			;
+			; 8251A initialisation, according to datasheet (3x 00h + RESET 040h)
+LOGINIT		ORL P2,#CSRAM+IOM8155	; deny RW access to external program MEM(allow UART, RIOT)
+			MOV R0,#CTRUART			; 8251A control register address
+			CLR A					; clear A
+			MOVX @R0,A				; 00H to control regiter
+			MOVX @R0,A				; 00H to control regiter
+			MOVX @R0,A				; 3x 00H to control regiter
+			MOV A,#40H				; reset 40h
+			MOVX @R0,A				; register write
+			MOV A,#4EH				; MODE: no parity, 8 databits, 1 stop bit, 16x
+			MOVX @R0,A				; register write
+			MOV A,#15H				; COMMAND: enable receive and transmit
+			MOVX @R0,A				; register write
+			RET
+			;
 			; log with registers preserved - R0 is changed though
 LOGACC		ANL P2,#~IOM8155		; select 8155 RAM(deny UART, RIOT)
 			MOV R0,#BACK_A			; backup RAM address

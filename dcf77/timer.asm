@@ -86,7 +86,6 @@ _PRPUL3		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 _PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
-			ANL A,#~PULSE_ERR		; clear error flag
 			ANL A,#~ALL_DONE		; clear done flag
 			MOV @R0,A				; save new state
 _PRPUI1		RET						; return

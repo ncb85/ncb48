@@ -6,12 +6,21 @@
 ; 100ms pulse should set all 4 bits of shift register to ones
 ; 200ms pulse should set all 8 bits of shift register to ones
 ;
-; macro for subtract instruction A=A-Rx
+; macros for subtract instruction A=A-Rx
 #DEFINE SUB(Rx) CPL A \ ADD A,Rx \ CPL A
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
-; macro for serial log
+;
+; macros for serial log debugging
+DEBUG		.EQU 1
+#IF DEBUG
 #DEFINE LOGA() CALL LOGACC
 #DEFINE LOGI(Val) MOV R7,A \ MOV A,#'Val' \ CALL LOGIMD \ MOV A,R7
+#DEFINE LOGINI() CALL LOGINIT
+#ELSE
+#DEFINE LOGA() ; nothing
+#DEFINE LOGI(Val) ; nothing
+#DEFINE LOGINI() ; nothing
+#ENDIF
 			;
 			.MODULE DCF77			; module name (for local _labels)
 			;
@@ -64,6 +73,7 @@ INTRPT		RETR 					; restore PC and PSW
 			;
 			; program start
 			.ORG BEGIN+1F8H
+			LOGINI()
 MAIN		CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
@@ -109,11 +119,14 @@ _SEC592		ANL A,#~TIME_VAL		; clear flag
 			LOGI(t)
 			JMP _MAILOP				; loop
 _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
+			ANL A,#~TIME_VAL		; clear flag
 			MOV @R0,A				; set CURR_STAT
 			JMP _MAILOP				; loop
 			.ECHO "Size: "
 			.ECHO $-BEGIN
 			.ECHO "\n"
+#IF DEBUG
 			#INCLUDE "debug.asm"	; DCF-77 decoder
+#ENDIF
 			.END
 			;
