@@ -42,7 +42,7 @@ PULSE_ONE	.EQU 10H				; value one pulse
 PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
-PULSE_DONE	.EQU 08H				; pulse processed
+;PULSE_DONE	.EQU 08H				; pulse processed
 ALL_DONE	.EQU 20H				; ready for new transmission
 TIME_VAL	.EQU 40H				; radio time is valid
 DISP_REFR	.EQU 80H				; refresh display
@@ -79,7 +79,7 @@ _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
 _DISPTIM	CALL DISP_TIME			; display time
 			JMP _MAILOP				; loop
 _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
-			ORL A,#PULSE_DONE		; set processed bit
+			;ORL A,#PULSE_DONE		; set processed bit
 			MOV @R0,A				; clear pulse
 			CLR F0					; clear F0
 			CPL F0					; set F0 - pulse value one
@@ -92,21 +92,20 @@ _VALPUL2
 			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
 _SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
-			JB5 _MAILOP				; frame done before, nothing to do
-			; ALL_DONE not yet set, write data from reception frame
+			JB5 _MAILOP				; ALL_DONE bit - frame done before, nothing to do
 			ANL A,#~PULSE_59		; clear sec59 bit
 			ORL A,#ALL_DONE			; set done bit(5)
 			MOV @R0,A				; set CURR_STAT
 			MOV R0,#BIT_NUM			; address of bit number
-			MOV A,#-1				; counter
-			MOV @R0,A				; clear bit number
+			MOV A,#-1				; preset counter to -1
+			MOV @R0,A				; set bit number
 			MOV R0,#CURR_STAT		; address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB6 _SEC592				; flag TIME VALID set - new clock time
 			JMP _MAILOP				; loop
 _SEC592		ANL A,#~TIME_VAL		; clear flag
 			MOV @R0,A				; set CURR_STAT
-			CALL SETRADTIM			; set radio time as new time
+			CALL SETRADTIM			; set received radio time as new time
 			LOGI(t)
 			JMP _MAILOP				; loop
 _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end

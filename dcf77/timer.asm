@@ -57,15 +57,8 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
-			ANL A,#~PULSE_DONE		; clear processed bit
 			MOV @R0,A				; save new state
-			RET
-_PRPUE1		MOV R0,#CURR_STAT		; get current state variable address to R0
-			MOV A,@R0				; get state
-			?ANL A,#~PULSE_VALID		; clear valid pulse
-			?ANL A,#~ALL_DONE		; clear done flag
-			MOV @R0,A				; set state
-			RET
+_PRPUE1		RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
