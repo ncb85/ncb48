@@ -51,9 +51,9 @@ PULSE_ONE	.EQU 10H				; value one pulse
 PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
-;PULSE_DONE	.EQU 08H				; pulse processed
-ALL_DONE	.EQU 20H				; ready for new transmission
-TIME_VAL	.EQU 40H				; radio time is valid
+;UNUSED		.EQU 08H				; unused bit (3)
+ALL_DONE	.EQU 20H				; radio frame processing completed
+TIME_VAL	.EQU 40H				; radio time valid
 DISP_REFR	.EQU 80H				; refresh display
 			;
 			.ORG BEGIN				; reset vector
@@ -89,7 +89,6 @@ _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
 _DISPTIM	CALL DISP_TIME			; display time
 			JMP _MAILOP				; loop
 _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
-			;ORL A,#PULSE_DONE		; set processed bit
 			MOV @R0,A				; clear pulse
 			CLR F0					; clear F0
 			CPL F0					; set F0 - pulse value one

@@ -6,13 +6,13 @@
 			;
 CSRAM		.EQU 00100000B			; P2.5 chip select RAM
 IOM8155		.EQU 00010000B			; P2.4 data/ram 8155 select
+ADRRIOT		.EQU 00H				; 8155 RIOT is selected by neg A3
 			;
 CTRUART		.EQU 09H				; UART control register
 BACK_A		.EQU 0FFH				; register backup area FF-F9 in RIOT
 			;
 			; 8251A initialisation, according to datasheet (3x 00h + RESET 040h)
-LOGINIT		ORL P2,#CSRAM+IOM8155	; deny RW access to external program MEM(allow UART, RIOT)
-			MOV R0,#CTRUART			; 8251A control register address
+LOGINIT		MOV R0,#CTRUART			; 8251A control register address
 			CLR A					; clear A
 			MOVX @R0,A				; 00H to control regiter
 			MOVX @R0,A				; 00H to control regiter
