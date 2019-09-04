@@ -29,7 +29,6 @@ DECODE		MOV R0,#BIT_NUM			; address of bit number
             JF0 _DECERR				; first bit always zero
 			MOV R0,#CURR_STAT		; get address of status
 			MOV A,@R0				; get status
-			ANL A,#~ALL_DONE		; clear done bit(5)
 			MOV @R0,A				; set new value
 			RET
 _DECB20		MOV R0,#RAD_HOU			; get address of hours digit to R0
