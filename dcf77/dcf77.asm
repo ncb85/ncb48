@@ -94,12 +94,12 @@ _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
 			CPL F0					; set F0 - pulse value one
 			JB4 _VALPUL2			; pulse value one
 			CLR F0					; pulse value zero
-_VALPUL2	;LOGI( )
-			;LOGA()
+_VALPUL2	LOGI( )
+			LOGA()
 			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
-_SEC59		JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
-			ANL A,#~PULSE_59		; clear sec59 bit
+_SEC59		ANL A,#~PULSE_59		; clear sec59 bit
+			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV @R0,A				; set CURR_STAT
 			MOV R0,#BIT_NUM			; address of bit number
 			MOV A,#-1				; preset counter to -1

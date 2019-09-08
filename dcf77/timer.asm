@@ -80,13 +80,14 @@ _PRPUL2		ORL A,#PULSE_ONE		; PULSE_ONE, set value bit
 			RET
 _PRPUL3		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
-			SUBI(TICKS)				; zero level present longer then second? (sec.59)
+			SUBI(TICKS/5*8)			; zero level present longer then second? (sec.59)
 			JNC	_PRPUL4				; yes, it is second nr.59
 			RET
 _PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
 			MOV @R0,A				; save new state
+			;LOGI($)
 _PRPUI1		RET						; return
 			;
 			; timer/counter interrupt, fetch input T0
@@ -94,7 +95,7 @@ TCINTR		SEL RB1					; second register bank
 			MOV R7,A				; backup A
 			CALL CLOC_INT			; run the clock
 			CLR C					; clear carry
-			JNT0 _TCIN1				; jump on 1
+			JT0 _TCIN1				; jump on 1 (or JNT0 on negative pulses)
 			CPL C					; set carry
 _TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
 			MOV A,@R0				; pulse history to A

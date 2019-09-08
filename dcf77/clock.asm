@@ -16,7 +16,7 @@ CLOC_INI	CLR A					; clear A
 			;
 			; set decoded radio time as new clock time
 SETRADTIM	MOV R0,#RAD_HOU			; radio time hours
-			MOV R1,#HOUR				; clock time hours
+			MOV R1,#HOUR			; clock time hours
 			MOV A,@R0				; get radio time hours
 			MOV @R1,A				; set clock time hours
 			INC R0					; move to minutes
