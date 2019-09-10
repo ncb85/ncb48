@@ -21,15 +21,13 @@ _SETBI2		RL A					; rotate A
 _SETBEN		RET						; return
 			;
 			; check hours; <24, last digit <10, sets CY on error
-CHECKH		;MOV R0,#RAD_HOU			; address of hours ?? needed ??
-			MOV A,@R0				; get value
+CHECKH		MOV A,@R0				; get hours
 			SUBI(24)				; less than 24?
 			JNC _CHKERR				; no, return error
 			JMP _CHKLD				; check last digit
 			;
 			; check minutes; <60, last digit <10, sets CY on error
-CHECKM		;MOV R0,#RAD_MIN			; address of minutes ?? needed ??
-			MOV A,@R0				; get value
+CHECKM		MOV A,@R0				; get minutes
 			SUBI(60)				; less than 60?
 			JNC _CHKERR				; no, return error
 _CHKLD		MOV A,@R0				; get value

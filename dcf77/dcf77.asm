@@ -52,7 +52,7 @@ PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
 ;UNUSED		.EQU 08H				; unused bit (3)
-;ALL_DONE	.EQU 20H				; radio frame processing completed (4)
+;UNUSED		.EQU 20H				; unused bit (4)
 TIME_VAL	.EQU 40H				; radio time valid
 DISP_REFR	.EQU 80H				; refresh display
 			;
