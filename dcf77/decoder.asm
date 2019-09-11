@@ -63,12 +63,13 @@ _DECH1		MOV A,R4				; restore bit number
 			JNC _DECEND				; yes, ignore
 			MOV A,R4				; restore bit number
 			SUBI(28)				; more than 28?
+			INC R0					; get address of minutes digit to R0
 			JC _DECM1				; no, try minutes
 			JZ _DECPA				; minutes parity bit
+			DEC R0					; return address of hours digit to R0
 			DEC A					; adjust (hours >= bit nr.29)
 			JMP SETBIT				; update hours digits
-_DECM1		INC R0					; get address of minutes digit to R0
-			MOV A,R4				; restore bit number
+_DECM1		MOV A,R4				; restore bit number
 			SUBI(21)				; less than 21?
 			JC _DECEND				; yes, ignore
 			CALL SETBIT				; update minutes digits
@@ -81,7 +82,6 @@ _DECPA		MOV A,@R0				; get hours digit
 			CLR C					; parity bit is zero, clear CY
 _DECP1		ADDC A,#0				; add CY
 			JB0 DECERR				; parity error
-			LOGI(p)
 			MOV A,R4				; restore bit number
 			SUBI(28)				; is it 28? (minute parity bit)
 			JNZ _DECP2				; not minute parity bit
