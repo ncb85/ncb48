@@ -28,22 +28,24 @@ BEGIN		.EQU 400H				; begin address
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
-TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second
+TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second (40)
 LOW_LEN		.EQU TICKS*4/5-1		; length of low (second) part of pulse
+PULTIMOUT	.EQU TICKS+15			; 55 ticks, approx 1.4s
 DATA_PIN	.EQU 01H				; data pin of display
 CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
 			;
 			; variables
 PULSE_HIST	.EQU 7FH				; pulse samples history register
-SECOND		.EQU 7EH				; seconds
-MINUTE		.EQU 7DH				; minutes
-HOUR		.EQU 7CH				; hours
-CURR_STAT	.EQU 7BH				; current state
-PULSE_LEN	.EQU 7AH				; current pulse length detected
-BIT_NUM		.EQU 79H
-RAD_MIN		.EQU 78H				; radio time minutes
-RAD_HOU		.EQU 77H				; radio time hours
+PULSE_NEXT	.EQU 7EH				; timout to receive next valid pulse
+SECOND		.EQU 7DH				; seconds
+MINUTE		.EQU 7CH				; minutes
+HOUR		.EQU 7BH				; hours
+CURR_STAT	.EQU 7AH				; current state
+PULSE_LEN	.EQU 79H				; current pulse length detected
+BIT_NUM		.EQU 78H				; radio sequence bit number
+RAD_MIN		.EQU 77H				; radio time minutes
+RAD_HOU		.EQU 76H				; radio time hours
 			;
 			; state constants
 PULSE_ZERO	.EQU 00H				; value zero pulse
@@ -52,7 +54,7 @@ PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
 ;UNUSED		.EQU 08H				; unused bit (3)
-;UNUSED		.EQU 20H				; unused bit (4)
+ALLOWAIT	.EQU 20H				; check for max allowed time between two pulses
 TIME_VAL	.EQU 40H				; radio time valid
 DISP_REFR	.EQU 80H				; refresh display
 			;
@@ -66,13 +68,12 @@ TIMR		JMP TCINTR				; call routine
 			; external interrupt
 INTRPT		RETR 					; restore PC and PSW
 			;
-			#INCLUDE "disp7seg.asm"	; seven segment display
 			#INCLUDE "timer.asm"	; pulse sampling timer interrupt
 			#INCLUDE "clock.asm"	; clock ticking
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
 			;
+			.ORG BEGIN+200H
 			; program start
-			.ORG BEGIN+1F8H
 			LOGINI()
 MAIN		CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
@@ -117,11 +118,13 @@ _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			ANL A,#~TIME_VAL		; clear flag
 			MOV @R0,A				; set CURR_STAT
 			JMP _MAILOP				; loop
-			.ECHO "Size: "
-			.ECHO $-BEGIN
-			.ECHO "\n"
+			;
 #IF DEBUG
 			#INCLUDE "debug.asm"	; DCF-77 decoder
 #ENDIF
+			#INCLUDE "disp7seg.asm"	; seven segment display
+			.ECHO "Size: "
+			.ECHO $-BEGIN
+			.ECHO "\n"
 			.END
 			;

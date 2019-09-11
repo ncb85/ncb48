@@ -66,5 +66,28 @@ CLOC_INT	INC R6					; ticks
 			JNZ _CLOC_IN1			; not yet one minute
 			CLR A					; clear A
 			MOV @R0,A				; clear hours
-_CLOC_IN1	RET
+_CLOC_IN1	MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get state
+			JB5 PULSE_TCK			; flag set, check for check max allowed time
+			RET
+			;
+			.ORG BEGIN+0F8H
+			; decrement time to wait for a pulse (approx 1.4sec)
+			; and raise error on timeout of maximum time allowed for next pulse
+PULSE_TCK	MOV R0,#BIT_NUM			; get address of bit number
+			MOV A,@R0				; get bit number
+			INC A
+			MOV R1,A				; back up A
+			SUBI(2)					; is it first bit?
+			JC _PULTIMT2			; yes, do not check timeout (bit sequence starts)
+			MOV A,R1				; restore A
+			SUBI(58)				; is it last bit?
+			JNC _PULTIMT2			; yes, do not check timeout (no pulse in sec 59)
+			MOV R0,#PULSE_NEXT		; get address of pulse timeout
+			MOV A,@R0				; move timeout to A
+			DEC A					; decrement wait period
+			MOV @R0,A				; set decremented timeout
+			JB7 _PULTIMT1			; timeout occurred, invalidate whole sequence
+_PULTIMT2	RET						; return
+_PULTIMT1	JMP DECERR				; waiting for next pulse timeout error
 			;

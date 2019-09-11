@@ -58,6 +58,8 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
 			MOV @R0,A				; save new state
+			MOV R0,#PULSE_NEXT		; get address of pulse timeout
+			MOV @R0,#PULTIMOUT		; set max time allowed for next pulse to come
 _PRPUE1		RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
@@ -86,8 +88,8 @@ _PRPUL3		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 _PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
+			ANL A,#~ALLOWAIT		; clear flag for checking time between pulses
 			MOV @R0,A				; save new state
-			;LOGI($)
 _PRPUI1		RET						; return
 			;
 			; timer/counter interrupt, fetch input T0
