@@ -24,7 +24,7 @@ DEBUG		.EQU 1
 			;
 			.MODULE DCF77			; module name (for local _labels)
 			;
-BEGIN		.EQU 400H				; begin address
+BEGIN		.EQU 000H				; begin address
 			;
 			; hw constants
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
@@ -34,6 +34,9 @@ PULTIMOUT	.EQU TICKS+15			; 55 ticks, approx 1.4s
 DATA_PIN	.EQU 01H				; data pin of display
 CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
+DSDAT_PIN	.EQU 08H				; data pin of DS1302
+DSCLK_PIN	.EQU 10H				; clock pin of DS1302
+DSCEN_PIN	.EQU 20H				; CE pin of DS1302
 			;
 			; variables
 PULSE_HIST	.EQU 7FH				; pulse samples history register
@@ -72,13 +75,17 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "clock.asm"	; clock ticking
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
 			;
-			.ORG BEGIN+200H
+			.ORG BEGIN+0200H
 			; program start
+MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			LOGINI()
-MAIN		CLR A					; clear A
+			CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
-			CALL CLOC_INI			; initialize clock
+			CALL CLOC_INI			; initialize (cpu registers) clock
+
+			CALL SSCLK				; initialise DS1302
+
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
 _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
@@ -96,6 +103,10 @@ _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
 			JB4 _VALPUL2			; pulse value one
 			CLR F0					; pulse value zero
 _VALPUL2	LOGI( )
+
+			MOV R1,#DS_SEC
+			CALL DSRC_REG
+
 			LOGA()
 			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
@@ -119,6 +130,7 @@ _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			MOV @R0,A				; set CURR_STAT
 			JMP _MAILOP				; loop
 			;
+			#INCLUDE "ds1302.asm"	; RTC chip
 #IF DEBUG
 			#INCLUDE "debug.asm"	; DCF-77 decoder
 #ENDIF
