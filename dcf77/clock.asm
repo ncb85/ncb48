@@ -26,7 +26,8 @@ SETRADTIM	MOV R0,#RAD_HOU			; radio time hours
 			INC R1					; move to seconds
 			CLR A					; clear A
 			MOV @R1,A				; set clock time seconds
-			RET
+			JMP SSCLK				; set RTC
+			;RET
 			;
 			; timer/counter interrupt
 CLOC_INT	INC R6					; ticks

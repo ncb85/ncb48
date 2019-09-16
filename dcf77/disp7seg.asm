@@ -2,6 +2,7 @@
 ;
 			;
 			.MODULE SEVSEG			; module name (for local _labels)
+			.ORG BEGIN+3A0H
 			; display one byte - seven segment display pattern
 DISP_BYTE	MOV R2,#8				; 8 segments with dot
 _DIB1		ANL P1,#~DATA_PIN		; clear data pin
@@ -34,6 +35,9 @@ DISP_TIME	MOV R0,#SECOND			; seconds address to R0
 			DEC R0					; minutes address to R0
 			MOV A,@R0				; move minutes to A
 			CALL DISP_BCD			; display MM
+
+			JMP _DISP_TI4
+
 			DEC R0					; hours address to R0
 			MOV A,@R0				; move hours to A
 			ANL A,#0F0H				; first digit zero?

@@ -74,18 +74,18 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "timer.asm"	; pulse sampling timer interrupt
 			#INCLUDE "clock.asm"	; clock ticking
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
+			#INCLUDE "ds1302.asm"	; RTC chip
 			;
-			.ORG BEGIN+0200H
+			;.ORG BEGIN+1C0H
 			; program start
 MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
+			ANL P1,#~DSCLK_PIN		; clear clock pin
 			LOGINI()
 			CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
-			CALL CLOC_INI			; initialize (cpu registers) clock
-
-			CALL SSCLK				; initialise DS1302
-
+			;CALL CLOC_INI			; initialize (cpu registers) clock
+			CALL RDCLK				; set (cpu reg.) clock with time from DS1302
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
 _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
@@ -102,12 +102,8 @@ _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
 			CPL F0					; set F0 - pulse value one
 			JB4 _VALPUL2			; pulse value one
 			CLR F0					; pulse value zero
-_VALPUL2	LOGI( )
-
-			MOV R1,#DS_SEC
-			CALL DSRC_REG
-
-			LOGA()
+_VALPUL2	;LOGI( )
+			;LOGA()
 			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
 _SEC59		ANL A,#~PULSE_59		; clear sec59 bit
@@ -130,13 +126,14 @@ _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			MOV @R0,A				; set CURR_STAT
 			JMP _MAILOP				; loop
 			;
-			#INCLUDE "ds1302.asm"	; RTC chip
+PART1S		.EQU $-BEGIN
 #IF DEBUG
 			#INCLUDE "debug.asm"	; DCF-77 decoder
 #ENDIF
+PART2B
 			#INCLUDE "disp7seg.asm"	; seven segment display
 			.ECHO "Size: "
-			.ECHO $-BEGIN
+PART2S		.ECHO PART1S+1024-PART2B
 			.ECHO "\n"
 			.END
 			;

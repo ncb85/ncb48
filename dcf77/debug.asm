@@ -3,6 +3,7 @@
 ; it uses flat structure to use only one level of stack
 ;
 			.MODULE DEBUG			; module name (for local _labels)
+			.ORG BEGIN+2F0H
 			;
 CSRAM		.EQU 00100000B			; P2.5 chip select RAM
 IOM8155		.EQU 00010000B			; P2.4 data/ram 8155 select
