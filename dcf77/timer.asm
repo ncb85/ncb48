@@ -74,7 +74,7 @@ _PRPUL1		INC @R0					; increment length variable address
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get current state
 			JNC _PRPUL2				; yes, it is long pulse e.g. PULSE_ONE
-			ANL A,#~PULSE_ONE		; no PULSE_ZERO, clear value bit
+			ANL A,#~PULSE_ONE		; it is PULSE_ZERO, clear value bit
 			MOV @R0,A				; set CURR_STAT
 			RET
 _PRPUL2		ORL A,#PULSE_ONE		; PULSE_ONE, set value bit

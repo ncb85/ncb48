@@ -2,17 +2,17 @@
 ; clock counts HH MM SS in BCD code and ticks (in binary)
 ;
 			; initialize clock
-CLOC_INI	CLR A					; clear A
-			MOV R0,#HOUR			; hours address to R0
-			MOV @R0,A				; clear hours
-			INC R0					; R0 points to minutes
-			MOV @R0,A				; clear minutes
-			INC R0					; R0 points to seconds
-			MOV @R0,A				; clear seconds
-			SEL RB1					; swith to alternate register bank
-			MOV R6,A				; clear ticks
-			SEL RB0					; back to standard register bank
-			RET
+CLOC_INI	;CLR A					; clear A
+			;MOV R0,#HOUR			; hours address to R0
+			;MOV @R0,A				; clear hours
+			;INC R0					; R0 points to minutes
+			;MOV @R0,A				; clear minutes
+			;INC R0					; R0 points to seconds
+			;MOV @R0,A				; clear seconds
+			;SEL RB1					; swith to alternate register bank
+			;MOV R6,A				; clear ticks
+			;SEL RB0					; back to standard register bank
+			;RET
 			;
 			; set decoded radio time as new clock time
 SETRADTIM	MOV R0,#RAD_HOU			; radio time hours
@@ -72,19 +72,9 @@ _CLOC_IN1	MOV R0,#CURR_STAT		; get address of current state variable
 			JB5 PULSE_TCK			; flag set, check for check max allowed time
 			RET
 			;
-			.ORG BEGIN+0F8H
-			; decrement time to wait for a pulse (approx 1.4sec)
+			; decrement time to wait for a pulse (approx 1.1sec)
 			; and raise error on timeout of maximum time allowed for next pulse
-PULSE_TCK	MOV R0,#BIT_NUM			; get address of bit number
-			MOV A,@R0				; get bit number
-			INC A
-			MOV R1,A				; back up A
-			SUBI(2)					; is it first bit?
-			JC _PULTIMT2			; yes, do not check timeout (bit sequence starts)
-			MOV A,R1				; restore A
-			SUBI(58)				; is it last bit?
-			JNC _PULTIMT2			; yes, do not check timeout (no pulse in sec 59)
-			MOV R0,#PULSE_NEXT		; get address of pulse timeout
+PULSE_TCK	MOV R0,#PULSE_NEXT		; get address of pulse timeout
 			MOV A,@R0				; move timeout to A
 			DEC A					; decrement wait period
 			MOV @R0,A				; set decremented timeout

@@ -30,7 +30,7 @@ BEGIN		.EQU 000H				; begin address
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second (40)
 LOW_LEN		.EQU TICKS*4/5-1		; length of low (second) part of pulse
-PULTIMOUT	.EQU TICKS+15			; 55 ticks, approx 1.4s
+PULTIMOUT	.EQU TICKS+5			; 55 ticks, approx 1.1s
 DATA_PIN	.EQU 01H				; data pin of display
 CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
@@ -51,12 +51,11 @@ RAD_MIN		.EQU 77H				; radio time minutes
 RAD_HOU		.EQU 76H				; radio time hours
 			;
 			; state constants
-PULSE_ZERO	.EQU 00H				; value zero pulse
-PULSE_ONE	.EQU 10H				; value one pulse
 PULSE_VALID	.EQU 01H				; valid pulse detected
 PULSE_59	.EQU 02H				; last second detected
 PULSE_ERR	.EQU 04H				; invalid input detected
 ;UNUSED		.EQU 08H				; unused bit (3)
+PULSE_ONE	.EQU 10H				; value one pulse
 ALLOWAIT	.EQU 20H				; check for max allowed time between two pulses
 TIME_VAL	.EQU 40H				; radio time valid
 DISP_REFR	.EQU 80H				; refresh display
@@ -102,8 +101,8 @@ _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
 			CPL F0					; set F0 - pulse value one
 			JB4 _VALPUL2			; pulse value one
 			CLR F0					; pulse value zero
-_VALPUL2	;LOGI( )
-			;LOGA()
+_VALPUL2	LOGI( )
+			LOGA()
 			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
 _SEC59		ANL A,#~PULSE_59		; clear sec59 bit
@@ -128,12 +127,14 @@ _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			;
 PART1S		.EQU $-BEGIN
 #IF DEBUG
+			.ORG BEGIN+2F0H
 			#INCLUDE "debug.asm"	; DCF-77 decoder
 #ENDIF
+			.ORG BEGIN+3A0H
 PART2B
 			#INCLUDE "disp7seg.asm"	; seven segment display
 			.ECHO "Size: "
-PART2S		.ECHO PART1S+1024-PART2B
+			.ECHO PART1S+1024-PART2B
 			.ECHO "\n"
 			.END
 			;
