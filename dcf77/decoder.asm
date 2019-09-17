@@ -75,6 +75,7 @@ _DECM1		MOV A,R4				; restore bit number
 			CALL SETBIT				; update minutes digits
 			RET						; return
 _DECPA		MOV A,@R0				; get hours digit
+			LOGI(p) \ LOGA()
 			CALL BCCNSB				; count ones
 			CLR C					; check parity - clear CY
 			CPL C					; set CY
