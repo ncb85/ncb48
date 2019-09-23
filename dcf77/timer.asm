@@ -92,14 +92,29 @@ _PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV @R0,A				; save new state
 _PRPUI1		RET						; return
 			;
+			; decrement time to wait for a pulse (approx 1.1sec)
+			; and raise error on timeout of maximum time allowed for next pulse
+PULSE_TCK	MOV R0,#PULSE_NEXT		; get address of pulse timeout
+			MOV A,@R0				; move timeout to A
+			DEC A					; decrement wait period
+			MOV @R0,A				; set decremented timeout
+			JB7 _PULTIMT1			; timeout occurred, invalidate whole sequence
+_PULTIMT2	RET						; return
+_PULTIMT1	JMP DECERR				; waiting for next pulse timeout error
+			;
 			; timer/counter interrupt, fetch input T0
 TCINTR		SEL RB1					; second register bank
 			MOV R7,A				; backup A
 			CALL CLOC_INT			; run the clock
-			CLR C					; clear carry
-			JT0 _TCIN1				; jump on 1 (or JNT0 on negative pulses)
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get state
+			JB5 _TCIN1				; flag set, check for check max allowed time
+			JMP _TCIN2				; flag not set, jump over
+_TCIN1		CALL PULSE_TCK			; flag set, check for check max allowed time
+_TCIN2		CLR C					; clear carry
+			JT0 _TCIN3				; jump on 1 (or JNT0 on negative pulses)
 			CPL C					; set carry
-_TCIN1		MOV R0,#PULSE_HIST		; pulse history address to R0
+_TCIN3		MOV R0,#PULSE_HIST		; pulse history address to R0
 			MOV A,@R0				; pulse history to A
 			RLC A					; shift in pulse value to A bit 0
 			MOV @R0,A				; backup pulse history

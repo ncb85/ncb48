@@ -49,6 +49,7 @@ PULSE_LEN	.EQU 79H				; current pulse length detected
 BIT_NUM		.EQU 78H				; radio sequence bit number
 RAD_MIN		.EQU 77H				; radio time minutes
 RAD_HOU		.EQU 76H				; radio time hours
+POSITION	.EQU 75H				; display multiplex position
 			;
 			; state constants
 PULSE_VALID	.EQU 01H				; valid pulse detected
@@ -59,6 +60,11 @@ PULSE_ONE	.EQU 10H				; value one pulse
 ALLOWAIT	.EQU 20H				; check for max allowed time between two pulses
 TIME_VAL	.EQU 40H				; radio time valid
 DISP_REFR	.EQU 80H				; refresh display
+			;
+			; display type
+MULPXD		.EQU 0					; 6x 74595 static
+STATIC		.EQU 1					; 2x 74595 column/row multiplexed
+DISPTYP		.EQU MULPXD
 			;
 			.ORG BEGIN				; reset vector
 			JMP MAIN				; jump to main routine
@@ -75,7 +81,6 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
 			#INCLUDE "ds1302.asm"	; RTC chip
 			;
-			;.ORG BEGIN+1C0H
 			; program start
 MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			ANL P1,#~DSCLK_PIN		; clear clock pin
@@ -83,6 +88,8 @@ MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
+			MOV R0,#POSITION		; get address of display position variable
+			MOV @R0,A				; clear POSITION
 			;CALL CLOC_INI			; initialize (cpu registers) clock
 			CALL RDCLK				; set (cpu reg.) clock with time from DS1302
 			STRT T					; start timer
@@ -91,10 +98,23 @@ _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			JB0 _VALPUL				; valid pulse
 			JB1 _SEC59				; 59 second pulse
+#IF DISPTYP==STATIC
 			JB7 _DISPTIM			; refresh display
+#ELSE
+			CALL DISP_TIME			; display time (multiplexed)
+			MOV R0,#POSITION		; get address of display position variable
+			INC @R0					; increment position
+			MOV A,@R0				; get POSITION
+			SUBI(6)					; last position?
+			JNZ _MAILOP				; loop
+			CLR A					; clear A
+			MOV @R0,A				; clear POSITION
+#ENDIF
 			JMP _MAILOP				; loop
-_DISPTIM	CALL DISP_TIME			; display time
+#IF DISPTYP==STATIC
+_DISPTIM	CALL DISP_TIME			; display time (only once)
 			JMP _MAILOP				; loop
+#ENDIF
 _VALPUL		ANL A,#~PULSE_VALID		; clear valid bit
 			MOV @R0,A				; clear pulse
 			CLR F0					; clear F0
@@ -132,7 +152,11 @@ PART1S		.EQU $-BEGIN
 #ENDIF
 			.ORG BEGIN+3A0H
 PART2B
-			#INCLUDE "disp7seg.asm"	; seven segment display
+#IF DISPTYP==STATIC
+			#INCLUDE "disNx595.asm"	; seven segment display
+#ELSE
+			#INCLUDE "dis2x595.asm"	; seven segment display
+#ENDIF
 			.ECHO "Size: "
 			.ECHO PART1S+1024-PART2B
 			.ECHO "\n"

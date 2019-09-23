@@ -1,7 +1,7 @@
 ; archeocomp(2019) MCS-48 7-segment display 6 digits code
-;
+; each LED segment has dedicated register - static mode
 			;
-			.MODULE SEVSEG			; module name (for local _labels)
+			.MODULE SEVSEGSTAT		; module name (for local _labels)
 			; display one byte - seven segment display pattern
 DISP_BYTE	MOV R2,#8				; 8 segments with dot
 _DIB1		ANL P1,#~DATA_PIN		; clear data pin
