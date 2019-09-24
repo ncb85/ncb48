@@ -147,14 +147,16 @@ _SEC59E		ANL A,#~PULSE_ERR		; clear error on minute end
 			;
 PART1S		.EQU $-BEGIN
 #IF DEBUG
-			.ORG BEGIN+2F0H
+			.ORG BEGIN+2E0H
 			#INCLUDE "debug.asm"	; DCF-77 decoder
 #ENDIF
+#IF DISPTYP==STATIC
 			.ORG BEGIN+3A0H
 PART2B
-#IF DISPTYP==STATIC
 			#INCLUDE "disNx595.asm"	; seven segment display
 #ELSE
+			.ORG BEGIN+390H
+PART2B
 			#INCLUDE "dis2x595.asm"	; seven segment display
 #ENDIF
 			.ECHO "Size: "

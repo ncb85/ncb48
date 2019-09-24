@@ -30,7 +30,7 @@ DISP_BCD	MOV R3,A				; move param to R3
 DISP_TIME	MOV R0,#POSITION		; get address of display position variable
 			MOV A,@R0				; move position to A
 			MOV R4,#01H				; left display digit
-			JZ _DISP_TI4			; first position
+			JZ _DISP_TI4			; first position on display
 			MOV R2,A				; move position to R2
 			SUBI(2)					; third or fourth column?
 			JC _DISP_T2				; no jump
@@ -57,6 +57,13 @@ _DISP_TI4	RR A					; divide by 2
 			SWAP A					; swap nibbles
 _DISP_TI5	ANL A,#0FH				; mask out higher BCD number
 			JMP DISP_BCD			; display at computed position
+_DISP_TI6	MOV R0,#HOUR			; get address of hour variable
+			MOV A,@R0				; fetch hours
+			SUBI(10)				; less than 10?
+			JNC _DISP_TI4			; no, continue displaying
+			MOV R0,#POSITION		; get address of display position variable
+			INC @R0					; skip leading zero
+			JMP DISP_TIME+2			; continue displaying
 			;
 			; seven segment display table
 DIGIT		.DB ~03FH				; 0
