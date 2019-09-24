@@ -44,19 +44,18 @@ _DISP_T3	RL A					; shift column
 			DJNZ R2,_DISP_T3		; decrement pos and loop
 			MOV R4,A				; set column
 			MOV A,@R0				; get position to A
-_DISP_TI4	RRC A					; divide by 2
-			ADD A,#HOUR				; add adress of hour variable
+_DISP_TI4	RR A					; divide by 2
+			ADD A,#HOUR				; add address of hour variable
 			MOV R0,A				; result to R0
 			MOV A,@R0				; get hour/minute/second
 			MOV R2,A				; backup to R2
 			MOV R0,#POSITION		; get address of display position variable
 			MOV A,@R0				; move position to A
-			JB0 _DISP_TI5			; lower nibble
+			RRC A					; bit 0 to CY
 			MOV A,R2				; get value from R2
+			JC _DISP_TI5			; lower nibble
 			SWAP A					; swap nibbles
-			JMP _DISP_TI6			; jump over
-_DISP_TI5	MOV A,R2				; get value from R2
-_DISP_TI6	ANL A,#0FH				; mask out higher BCD number
+_DISP_TI5	ANL A,#0FH				; mask out higher BCD number
 			JMP DISP_BCD			; display at computed position
 			;
 			; seven segment display table
