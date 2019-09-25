@@ -30,21 +30,21 @@ DISP_BCD	MOV R3,A				; move param to R3
 DISP_TIME	MOV R0,#POSITION		; get address of display position variable
 			MOV A,@R0				; move position to A
 			MOV R4,#01H				; left display digit
-			JZ _DISP_TI4			; first position on display
+			JZ _DISP_T6				; first position on display
 			MOV R2,A				; move position to R2
 			SUBI(2)					; third or fourth column?
-			JC _DISP_T2				; no jump
+			JC _DISP_T2				; no, jump
 			INC R2					; skip one display position
 _DISP_T1	MOV A,R2				; move position to A
 			SUBI(5)					; fifth or sixth column?
-			JC _DISP_T2				; no jump
+			JC _DISP_T2				; no, jump
 			INC R2					; skip one display position
 _DISP_T2	MOV A,R4				; get column to A
 _DISP_T3	RL A					; shift column
 			DJNZ R2,_DISP_T3		; decrement pos and loop
 			MOV R4,A				; set column
-			MOV A,@R0				; get position to A
-_DISP_TI4	RR A					; divide by 2
+_DISP_T4	MOV A,@R0				; get position to A
+			RR A					; divide by 2
 			ADD A,#HOUR				; add address of hour variable
 			MOV R0,A				; result to R0
 			MOV A,@R0				; get hour/minute/second
@@ -53,15 +53,14 @@ _DISP_TI4	RR A					; divide by 2
 			MOV A,@R0				; move position to A
 			RRC A					; bit 0 to CY
 			MOV A,R2				; get value from R2
-			JC _DISP_TI5			; lower nibble
+			JC _DISP_T5				; lower nibble
 			SWAP A					; swap nibbles
-_DISP_TI5	ANL A,#0FH				; mask out higher BCD number
+_DISP_T5	ANL A,#0FH				; mask out higher BCD number
 			JMP DISP_BCD			; display at computed position
-_DISP_TI6	MOV R0,#HOUR			; get address of hour variable
-			MOV A,@R0				; fetch hours
-			SUBI(10)				; less than 10?
-			JNC _DISP_TI4			; no, continue displaying
-			MOV R0,#POSITION		; get address of display position variable
+_DISP_T6	MOV R1,#HOUR			; get address of hour variable
+			MOV A,@R1				; fetch hours
+			ANL A,#0F0H				; less than 10?
+			JNZ _DISP_T4			; no, continue displaying
 			INC @R0					; skip leading zero
 			JMP DISP_TIME+2			; continue displaying
 			;

@@ -90,6 +90,8 @@ _PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
 			ORL A,@R0				; combine values
 			ANL A,#~ALLOWAIT		; clear flag for checking time between pulses
 			MOV @R0,A				; save new state
+			CLR A					; clear A
+			MOV R6,A				; clear ticks
 _PRPUI1		RET						; return
 			;
 			; decrement time to wait for a pulse (approx 1.1sec)

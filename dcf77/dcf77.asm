@@ -11,7 +11,7 @@
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 ;
 ; macros for serial log debugging
-DEBUG		.EQU 1
+DEBUG		.EQU 0
 #IF DEBUG
 #DEFINE LOGA() CALL LOGACC
 #DEFINE LOGI(Val) MOV R7,A \ MOV A,#'Val' \ CALL LOGIMD \ MOV A,R7
@@ -106,7 +106,7 @@ _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
 			INC @R0					; increment position
 			MOV A,@R0				; get POSITION
 			SUBI(6)					; last position?
-			JNZ _MAILOP				; loop
+			JC _MAILOP				; loop
 			CLR A					; clear A
 			MOV @R0,A				; clear POSITION
 #ENDIF
