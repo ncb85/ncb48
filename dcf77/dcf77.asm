@@ -129,14 +129,12 @@ _VALPUL2	LOGI( )
 			CALL DECODE				; decode pulses
 			JMP _MAILOP				; loop
 _SEC59		ANL A,#~PULSE_59		; clear sec59 bit
-			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV @R0,A				; set CURR_STAT
+			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV R0,#BIT_NUM			; address of bit number
 			MOV A,@R0				; get bit number
-			LOGA()
 			SUBI(58)				; is this really last second of minute?
 			JZ _SEC591				; yes, all is ok
-			LOGI(x)
 			MOV R0,#CURR_STAT		; address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			ANL A,#~TIME_VAL		; clear flag TIME VALID
