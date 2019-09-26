@@ -47,7 +47,7 @@ CLOC_INT	INC R6					; ticks
 			DEC R0					; minutes address to R0
 			CALL INCBCD				; increment minutes
 			SUBI(60H)				; subtract 60m (one hour)
-			JNZ _INCB1				; not yet one hour
+			JNZ _CLOI1				; not yet one hour
 			CLR A					; clear A
 			MOV @R0,A				; clear minutes
 			DEC R0					; hours address to R0
