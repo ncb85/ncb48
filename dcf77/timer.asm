@@ -64,28 +64,31 @@ _PRPUE1		RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
-			JC _PRPUL3				; yes, still no new pulse detected
+			JC _PRPUL4				; yes, still no new pulse detected
 			MOV A,R4				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
-			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
+			SUBI(10)				; is count above 9?
+			JC _PRPUL2				; high level duration is not too long
+			JMP DECERR				; set error
+_PRPUL2		MOV A,@R0				; get pulse length
 			SUBI(6)					; is count above 5?
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get current state
-			JNC _PRPUL2				; yes, it is long pulse e.g. PULSE_ONE
+			JNC _PRPUL3				; yes, it is long pulse e.g. PULSE_ONE
 			ANL A,#~PULSE_ONE		; it is PULSE_ZERO, clear value bit
 			MOV @R0,A				; set CURR_STAT
 			RET
-_PRPUL2		ORL A,#PULSE_ONE		; PULSE_ONE, set value bit
+_PRPUL3		ORL A,#PULSE_ONE		; PULSE_ONE, set value bit
 			MOV @R0,A				; set CURR_STAT
 			RET
-_PRPUL3		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
+_PRPUL4		MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			MOV A,@R0				; get pulse length
 			SUBI(TICKS/5*8)			; zero level present longer then second? (sec.59)
-			JNC	_PRPUL4				; yes, it is second nr.59
+			JNC	_PRPUL5				; yes, it is second nr.59
 			RET
-_PRPUL4		MOV R0,#CURR_STAT		; get current state variable address to R0
+_PRPUL5		MOV R0,#CURR_STAT		; get current state variable address to R0
 			MOV A,#PULSE_59			; set new state, we have detected second nr.59
 			ORL A,@R0				; combine values
 			ANL A,#~ALLOWAIT		; clear flag for checking time between pulses
