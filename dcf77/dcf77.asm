@@ -11,7 +11,7 @@
 #DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 ;
 ; macros for serial log debugging
-DEBUG		.EQU 0
+DEBUG		.EQU 1
 #IF DEBUG
 #DEFINE LOGA() CALL LOGACC
 #DEFINE LOGI(Val) MOV R7,A \ MOV A,#'Val' \ CALL LOGIMD \ MOV A,R7
@@ -81,16 +81,19 @@ INTRPT		RETR 					; restore PC and PSW
 			#INCLUDE "decoder.asm"	; DCF-77 decoder
 			#INCLUDE "ds1302.asm"	; RTC chip
 			;
-			; program start
+			; program starts here
 MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			ANL P1,#~DSCLK_PIN		; clear clock pin
 			LOGINI()
 			CLR A					; clear A
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV @R0,A				; clear CURR_STAT
+			DEC R0					; PULSE_LEN
+			MOV @R0,A				; clear PULSE_LEN
+			DEC R0					; BIT_NUM
+			MOV @R0,A				; clear BIT_NUM
 			MOV R0,#POSITION		; get address of display position variable
 			MOV @R0,A				; clear POSITION
-			;CALL CLOC_INI			; initialize (cpu registers) clock
 			CALL RDCLK				; set (cpu reg.) clock with time from DS1302
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
@@ -129,6 +132,16 @@ _SEC59		ANL A,#~PULSE_59		; clear sec59 bit
 			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV @R0,A				; set CURR_STAT
 			MOV R0,#BIT_NUM			; address of bit number
+			MOV A,@R0				; get bit number
+			LOGA()
+			SUBI(58)				; is this really last second of minute?
+			JZ _SEC591				; yes, all is ok
+			LOGI(x)
+			MOV R0,#CURR_STAT		; address of current state variable
+			MOV A,@R0				; get CURR_STAT
+			ANL A,#~TIME_VAL		; clear flag TIME VALID
+			MOV @R0,A				; set CURR_STAT
+_SEC591		MOV R0,#BIT_NUM			; address of bit number
 			MOV A,#-1				; preset counter to -1
 			MOV @R0,A				; set bit number
 			MOV R0,#CURR_STAT		; address of current state variable
@@ -155,7 +168,7 @@ PART1S		.EQU $-BEGIN
 PART2B
 			#INCLUDE "disNx595.asm"	; seven segment display
 #ELSE
-			.ORG BEGIN+390H
+			.ORG BEGIN+3A0H
 PART2B
 			#INCLUDE "dis2x595.asm"	; seven segment display
 #ENDIF
