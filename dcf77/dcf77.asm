@@ -30,7 +30,7 @@ BEGIN		.EQU 000H				; begin address
 CRYSTAL		.EQU 4915200			; Hz, timer interrupts 40 times per second
 TICKS		.EQU CRYSTAL/3/5/32/256 ; ticks per second (40)
 LOW_LEN		.EQU TICKS*4/5-1		; length of low (second) part of pulse
-PULTIMOUT	.EQU TICKS+5			; 55 ticks, approx 1.1s
+PULTIMOUT	.EQU TICKS+5			; 45 ticks, approx 1.1s
 DATA_PIN	.EQU 01H				; data pin of display
 CLOCK_PIN	.EQU 02H				; clock pin of display
 LATCH_PIN	.EQU 04H				; latch pin of display
@@ -130,20 +130,22 @@ _VALPUL2	LOGI( )
 			JMP _MAILOP				; loop
 _SEC59		ANL A,#~PULSE_59		; clear sec59 bit
 			MOV @R0,A				; set CURR_STAT
-			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
+			MOV R3,A				; backup A (CURR_STAT)
 			MOV R0,#BIT_NUM			; address of bit number
 			MOV A,@R0				; get bit number
+			MOV R2,A				; backup A(BIT_NUM)
+			MOV A,#0				; preset counter to 0
+			MOV @R0,A				; set bit number
+			MOV A,R3				; restore A(CURR_STAT)
+			MOV R0,#CURR_STAT		; address of current state variable
+			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
+			MOV A,R2				; restore A(BIT_NUM)
 			SUBI(58)				; is this really last second of minute?
 			JZ _SEC591				; yes, all is ok
-			MOV R0,#CURR_STAT		; address of current state variable
 			MOV A,@R0				; get CURR_STAT
 			ANL A,#~TIME_VAL		; clear flag TIME VALID
 			MOV @R0,A				; set CURR_STAT
-_SEC591		MOV R0,#BIT_NUM			; address of bit number
-			MOV A,#-1				; preset counter to -1
-			MOV @R0,A				; set bit number
-			MOV R0,#CURR_STAT		; address of current state variable
-			MOV A,@R0				; get CURR_STAT
+_SEC591		MOV A,@R0				; get CURR_STAT
 			JB6 _SEC592				; flag TIME VALID set - new clock time
 			JMP _MAILOP				; loop
 _SEC592		ANL A,#~TIME_VAL		; clear flag
