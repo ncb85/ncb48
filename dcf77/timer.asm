@@ -71,10 +71,27 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV R0,#PULSE_NEXT		; get address of pulse timeout
 			MOV @R0,#PULTIMOUT		; set max time allowed for next pulse to come
 _PRPUE1		RET
+_PRPUE2		MOV R0,#BIT_NUM			; address of bit number
+			MOV A,@R0				; get bit number
+			SUBI(58)				; sec.58 is latest?
+			JNZ _PRPUE1				; no, return
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,@R0				; get state (PULSE_ZERO or PULSE_ONE)
+			ANL A,#PULSE_ONE		; ignore other bits
+			RR A					; divide by 2 (resulting in 4 or 0)
+			MOV R0,#PULSE_LEN		; check low pulse length at least 800ms
+			ADD A,@R0				; add length of high level period
+			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
+			JC _PRPUE1				; no, unable to decide (maybe state after transition)
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV A,#PULSE_VALID		; set valid pulse (sec.59)
+			ORL A,@R0				; combine values
+			MOV @R0,A				; save new state
+			RET
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
-			JC _PRPUE1				; yes, still no new pulse detected
+			JC _PRPUE2				; yes, still no new pulse detected
 			MOV A,R4				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
@@ -100,8 +117,8 @@ _PRPLST		MOV R0,#PULSE_LEN		; address of pulse length variable
 			ORL A,@R0				; combine values
 			ANL A,#~ALLOWAIT		; clear flag for checking time between pulses
 			MOV @R0,A				; save new state
-			CLR A					; clear A
-			MOV R6,A				; clear ticks
+			MOV A,#4				; compensate shift register delay
+			MOV R6,A				; preset ticks
 _PRPUI1		RET						; return
 			;
 			; decrement time to wait for a pulse (approx 1.1sec)
