@@ -29,7 +29,7 @@ _INCB1		RET						;
 CLOC_INT	INC R6					; ticks
 			MOV A,#TICKS			; ticks per second
 			SUB(R6)					; A=A-R6
-			JNZ _INCB1				; not yet one second
+			JNZ _CLOI1				; not yet one second
 #IF DISPTYP==STATIC
 			MOV R0,#CURR_STAT		; get address of current state variable
 			XCH A,@R0				; refresh display once per second
@@ -41,13 +41,13 @@ CLOC_INT	INC R6					; ticks
 			MOV R0,#SECOND			; seconds address to R0
 			CALL INCBCD				; increment seconds
 			SUBI(60H)				; subtract 60s (one minute)
-			JNZ _INCB1				; not yet one minute
+			JNZ _CLOI1				; not yet one minute
 			CLR A					; clear A
 			MOV @R0,A				; clear seconds
 			DEC R0					; minutes address to R0
 			CALL INCBCD				; increment minutes
 			SUBI(60H)				; subtract 60m (one hour)
-			JNZ _INCB1				; not yet one hour
+			JNZ _CLOI1				; not yet one hour
 			CLR A					; clear A
 			MOV @R0,A				; clear minutes
 			DEC R0					; hours address to R0
