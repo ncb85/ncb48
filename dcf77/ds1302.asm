@@ -44,6 +44,43 @@ DS_WRP		.EQU 8EH				; write protect flag (bit 7)
 			; bit definitions
 DS_READ		.EQU 01H				; bit 0 set indicates READ
 			;
+			; set and start clock (in 24h, bit7 hour reg. is 0)
+			; (sec.reg bit 7 value 0 starts clock)
+SSCLK		CLR A					; clear A
+			MOV R1,#DS_WRP			; get write protect address to R1
+			CALL DSSE_REG			; clear write protect flag
+			MOV R1,#DS_HOUR			; get hours register address to R1
+			MOV R0,#HOUR			; clock time hours
+			MOV A,@R0				; get time hours
+			CALL DSSE_REG			; set hours
+			INC R0					; move to minutes
+			MOV R1,#DS_MIN			; get minutes register address to R1
+			MOV A,@R0				; get time minutes
+			CALL DSSE_REG			; set minutes
+			INC R0					; move to seconds
+			MOV R1,#DS_SEC			; get seconds register address to R1
+			MOV A,@R0				; get time seconds
+			CALL DSSE_REG			; set seconds
+			MOV R1,#DS_WRP			; get write protect address to R1
+			MOV A,#80H				; set write protect flag
+			CALL DSSE_REG			; clear write protect flag
+			RET
+			;
+			; read clock and set cpu register time
+RDCLK		MOV R1,#DS_HOUR			; get hours register address to R1
+			CALL DSRC_REG			; set hours
+			MOV R0,#HOUR			; clock time hours
+			MOV @R0,A				; set time hours
+			MOV R1,#DS_MIN			; get minutes register address to R1
+			CALL DSRC_REG			; get minutes
+			INC R0					; move to minutes
+			MOV @R0,A				; set time minutes
+			MOV R1,#DS_SEC			; get seconds register address to R1
+			CALL DSRC_REG			; get seconds
+			INC R0					; move to seconds
+			MOV @R0,A				; set time seconds
+			RET
+			;
 			; send address byte to DS1302, data bit is input on the rising edge of clock pin
 DSSE_BYTE	MOV R2,#8				; 8 bits serially
 _DSSB1		ANL P1,#~DSDAT_PIN		; clear data pin
@@ -85,42 +122,5 @@ _DSRB2		XCH A,R1				; swap A with R1
 			DJNZ R2,_DSRB1			; shift in all bits
 			MOV A,R1				; get result to A
 			ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
-			RET
-			;
-			; set and start clock (in 24h, bit7 hour reg. is 0)
-			; (sec.reg bit 7 value 0 starts clock)
-SSCLK		CLR A					; clear A
-			MOV R1,#DS_WRP			; get write protect address to R1
-			CALL DSSE_REG			; clear write protect flag
-			MOV R1,#DS_HOUR			; get hours register address to R1
-			MOV R0,#HOUR			; clock time hours
-			MOV A,@R0				; get time hours
-			CALL DSSE_REG			; set hours
-			INC R0					; move to minutes
-			MOV R1,#DS_MIN			; get minutes register address to R1
-			MOV A,@R0				; get time minutes
-			CALL DSSE_REG			; set minutes
-			INC R0					; move to seconds
-			MOV R1,#DS_SEC			; get seconds register address to R1
-			MOV A,@R0				; get time seconds
-			CALL DSSE_REG			; set seconds
-			MOV R1,#DS_WRP			; get write protect address to R1
-			MOV A,#80H				; set write protect flag
-			CALL DSSE_REG			; clear write protect flag
-			RET
-			;
-			; read clock and set cpu register time
-RDCLK		MOV R1,#DS_HOUR			; get hours register address to R1
-			CALL DSRC_REG			; set hours
-			MOV R0,#HOUR			; clock time hours
-			MOV @R0,A				; set time hours
-			MOV R1,#DS_MIN			; get minutes register address to R1
-			CALL DSRC_REG			; get minutes
-			INC R0					; move to minutes
-			MOV @R0,A				; set time minutes
-			MOV R1,#DS_SEC			; get seconds register address to R1
-			CALL DSRC_REG			; get seconds
-			INC R0					; move to seconds
-			MOV @R0,A				; set time seconds
 			RET
 			;
