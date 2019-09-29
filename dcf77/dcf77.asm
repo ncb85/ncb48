@@ -140,7 +140,7 @@ _SEC59		ANL A,#~PULSE_59		; clear sec59 bit
 			MOV R0,#CURR_STAT		; address of current state variable
 			JB2 _SEC59E				; error in reception RAD_ERR, nothing to do
 			MOV A,R2				; restore A(BIT_NUM)
-			SUBI(58)				; is this really last second of minute?
+			SUBI(59)				; is this really last second of minute?
 			JZ _SEC591				; yes, all is ok
 			MOV A,@R0				; get CURR_STAT
 			ANL A,#~TIME_VAL		; clear flag TIME VALID
