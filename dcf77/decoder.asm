@@ -22,13 +22,13 @@ _SETBEN		RET						; return
 			;
 			; check hours; <24, last digit <10, sets CY on error
 CHECKH		MOV A,@R0				; get hours
-			SUBI(24)				; less than 24?
+			SUBI(24H)				; less than 24?
 			JNC _CHKERR				; no, return error
 			JMP _CHKLD				; check last digit
 			;
 			; check minutes; <60, last digit <10, sets CY on error
 CHECKM		MOV A,@R0				; get minutes
-			SUBI(60)				; less than 60?
+			SUBI(60H)				; less than 60?
 			JNC _CHKERR				; no, return error
 _CHKLD		MOV A,@R0				; get value
 			ANL A,#0FH				; last digit
@@ -86,20 +86,23 @@ _DECP1		ADDC A,#0				; add CY
 			MOV A,R4				; restore bit number
 			SUBI(28)				; is it 28? (minute parity bit)
 			JNZ _DECP2				; not minute parity bit
-			CALL CHECKH				; check hour value 0-23
+			MOV R0,#RAD_MIN			; get address of miute digit to R0
+			CALL CHECKM				; check minute value 0-59
 			JC DECERR				; set error
 			RET
 _DECP2		MOV A,R4				; restore bit number
 			SUBI(35)				; is it 35?
 			JNZ _DECEND				; no, return
-			CALL CHECKM				; check minute value 0-59
+			MOV R0,#RAD_HOU			; get address of hours digit to R0
+			CALL CHECKH				; check hour value 0-23
 			JC DECERR				; set error
 			MOV R0,#CURR_STAT		; get address of status
 			MOV A,@R0				; get status
 			JB2 _DECEND				; return on previous error(s)
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-DECERR		MOV A,#PULSE_ERR		; set error flag for radio frame
+DECERR		LOGA()
+			MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values
 			ANL A,#~ALLOWAIT		; clear flag for time checking between pulses
