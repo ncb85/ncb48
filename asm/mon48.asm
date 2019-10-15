@@ -4,6 +4,7 @@
 ;
 ; macro for subtract instruction A=A-Rx
 #DEFINE SUB(Rx) CPL A \ ADD A,Rx \ CPL A
+#DEFINE SUBI(Val) CPL A \ ADD A,#Val \ CPL A
 ; subtract 8 bit numbers A=Rx-A
 ;SUBA		CPL A					; one's complement a
 ;			INC A					; two's complement a
@@ -67,7 +68,7 @@ INI8155	  	MOV R0,#ADRRIOT+4		; 8155 timer lower 8bits register address
 			CLR A					; clear A
 			MOVX @R0,A				; counter low 8 bits
 			INC R0					; select counter high 6 bits + mode bits
-			MOV A,#7FH				; counter high 6 bits 3CH + mode bits 0 1
+			MOV A,#7CH				; counter high 6 bits 3CH + mode bits 0 1
 			MOVX @R0,A				; send it
 			MOV R0,#ADRRIOT			; control register
 			MOV A,#0C3H				; start timer, ports A,B output, C set to input
@@ -90,10 +91,9 @@ TXBYTE		MOV R3,A				; backup A to R3
 			SWAP A					; move to lower nibble
 			CALL TXNIBB				; send higher HEX digit
 			MOV A,R3				; restore input value
-TXNIBB		MOV R4,#10				; compare value
-			ANL A,#0FH				; lower nibble
+TXNIBB		ANL A,#0FH				; lower nibble
 			MOV R5,A				; backup lower nibble to R5
-			SUB(R4)					; compare R4 with A
+			SUBI(10)				; compare A with 10
 			MOV A,R5				; restore lower nibble
 			JNC TXBY3				; byte greater than binary 0AH
 			ADD A,#'0'				; it is number 0..9, add '0'
@@ -128,26 +128,22 @@ RXC2		DEC R0					; 8251A data reg
 			; allows user abort
 RXHEXC		CALL RXCHAR				; receive char
 			MOV R2,A				; backup to R2
-			MOV R4,#CTRL_C			; subtract CTRL_C
-			SUB(R4)					; from A
+			SUBI(CTRL_C)			; subtract CTRL_C from A
 			JNZ RXHEX1				; not user abort, continue
 			CPL C					; indicate user abort
 			RET
 RXHEX1		MOV A,R2				; restore A
-			MOV R4,#'Z'+1			; subtract ASCII value 'Z'+1
-			SUB(R4)					; from A
+			SUBI('Z'+1)				; subtract ASCII value 'Z'+1 from A
 			MOV A,R2				; restore A
 			JC RXHEX2				; it is uppercase char
 			ANL A,#11011111B		; to uppercase
-RXHEX2		MOV R4,#'A'				; subtract ASCII value 'A'
-			SUB(R4)					; from A
+RXHEX2		SUBI('A')				; subtract ASCII value 'A' from A
 			JNC RXHEX3				; char greater than ASCII "A"
 			ADD A,#'A'-'0'			; char is 0..9, so add back 17 (= 'A'-'0')
 			JMP RXHEX4				; jump over
 RXHEX3		ADD A,#0AH				; add 0AH
-RXHEX4		MOV R4,#16				; check it is hexa number 0..15(0..F)
-			MOV R2,A				; backup to R2
-			SUB(R4)					; subtract 16, normally sets C
+RXHEX4		MOV R2,A				; backup to R2
+			SUBI(16)				; hexa number 0..15(0..F), subtract 16 normally sets C
 			MOV A,R2				; restore A
 			JC RXHEX5				; HEX char, return
 			MOV R2,#BELL			; bell sound
@@ -166,16 +162,15 @@ RXBYTE		CALL RXHEXC				; receive first char, upper nibble
 			ADD A,R5				; add upper nibble
 RXRET		RET						; A contains decoded byte
 			;
-			; receive INTEL HEX file
+			; receive one INTEL HEX line
 RCIHEX		MOV R2,#3				; try 3 chars
 RCIHX1		CALL RXCHAR				; receive one char
-			MOV R4,#':'				; wait for ':' the begining of each line
-			SUB(R4)					; compare with A
+			SUBI(':')				; wait for ':' the beginning of each line
 			JZ RCIHLEN				; found beginning, receive rest of line
 RCIHX2		DJNZ R2,RCIHX1			; ignore newlines/noise and try again
 			RET						; give up
 			;
-			; receive one line of INTEL HEX
+			; receive rest of the INTEL HEX line
 RCIHLEN		CALL RXBYTE				; receive length of data
 			;JNZ RCIHX3				; length zero, last line of file
 			;CPL F0					; set flag to indicate end of file
@@ -282,16 +277,14 @@ MEMDP3		CALL TXCHAR				; print space
 			ANL A,#0FH				; modulo 16
 			JZ MEMDP4				; 16 bytes written out
 			JMP MEMDP3				; still the same line
-MEMDP4		MOV R3,#16				; move address back to beginning of lines
-			MOV A,R1				; get address to A
-			SUB(R3)					; subtract 16
+MEMDP4		MOV A,R1				; get address to A
+			SUBI(16)				; move address back to beginning of lines
 			MOV R1,A				; set adjusted address to R1
 			CALL TXCHAR				; print space
 			CALL TXCHAR				; print second space
 MEMDP5		CALL FETCHB				; fetch byte from memory
 			MOV R7,A				; backup byte
-			MOV R2,#32				; non printable chars 0-31
-			SUB(R2)					; subtract from A
+			SUBI(32)				; non printable chars 0-31
 			JC MEMDP6				; print dot
 			MOV A,R7				; restore byte
 			JB7 MEMDP6				; non ASCII character
