@@ -245,8 +245,7 @@ FETCHE		ANL P2,#~IOM8155		; select 8155 RAM(deny UART, RIOT)
 			MOVX A,@R1				; fetch byte from external RAM in 8155
 			ORL P2,#IOM8155			; deselect 8155 RAM(allow UART, RIOT)
 			RET
-FETCHP		MOV R0,#IHADDR+1		; page number
-			MOV A,@R0				; load it
+FETCHP		MOV A,R4				; get page number
 			ANL A,#~CSRAM			; allow RW access to external program MEM(deny UART, RIOT)
 			OUTL P2,A				; output page number to P20..P23
 			MOVX A,@R1				; fetch byte from program memory
@@ -260,8 +259,7 @@ FETCHP		MOV R0,#IHADDR+1		; page number
 MEMDMP		CALL NEWLINE			; print newline
 			JF0 MEMDP1				; program memory needs three address bytes
 			JMP MEMDP2				; print 8 bit address
-MEMDP1		MOV R0,#IHADDR+1		; page number
-			MOV A,@R0				; load it
+MEMDP1		MOV A,R4				; get page number
 			CALL TXNIBB				; echo page number
 MEMDP2		MOV A,R1				; address to A
 			MOV R2,A				; address to R2 (param)
@@ -302,8 +300,7 @@ MEMDP8		DJNZ R6,MEMDMP			; print next line
 			;
 			; dump program memory, dumps one page 256 bytes
 DUMPP		CALL RXHEXC				; get page number
-			MOV R0,#IHADDR+1		; page number
-			MOV @R0,A				; save it
+			MOV R4,A				; back up page number
 			CPL F0					; set F0 - program code MEM
 DUMCM		MOV R6,#16				; parameter number of lines
 			MOV R1,#0				; parameter start address on page boundary
