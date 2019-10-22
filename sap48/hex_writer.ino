@@ -6,8 +6,9 @@
 char *bin_to_hex(unsigned int value, int digits) {
   int i,j,k;
   char p;
+  hexbuff[0] = '\0'; // terminate string
   if (value > 65536 || value < 0 || digits > 4 || digits < 1) {
-    return "";
+    return hexbuff;
   }
   // convert to hex
   for (i=0; i<digits; i++) {

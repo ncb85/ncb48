@@ -16,18 +16,24 @@ byte hex_conv (char *pstr) {
     return -1;
   }
 
+  if (*pstr > 'F') {
+    *pstr -= 'a'-'A';
+  }
   byte b = *pstr++ - '0';
   if (b > 9) { // A-F
     b -= 7;
   }
-  // high-order nybble
+  // high-order nibble
   b <<= 4;
 
+  if (*pstr > 'F') {
+    *pstr -= 'a'-'A';
+  }
   byte b1 = *pstr++ - '0';
   if (b1 > 9) {
     b1 -= 7;
   }
-  b |= b1; // low order nybble
+  b |= b1; // low order nibble
 
   return b;
 }
@@ -114,7 +120,7 @@ bool read_line() {
   return true;
 }
 
-bool load_hex() {
+void load_hex() {
   if (!check_chip_type()) {
     return;
   }
