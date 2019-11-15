@@ -35,10 +35,11 @@ PRPULS		MOV R4,A				; back up A
 			MOV R2,A				; back up A (count of lower nibble ones)
 			MOV R0,#PULSE_LEN		; get pulse length variable address to R0
 			SUBI(2)					; number of ones in current 100ms period 0 or 1?
-			JC _PRPUL1				; yes, we have zero, continue
+			JC _PRPUL1				; yes, we have zero now, jump
 			MOV A,R2				; restore count of latest four samples
 			SUBI(3)					; is number of ones 3 or 4?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
+			; current period (nibble) is one
 _PRPUH1		MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
 			JC _PRPUH2				; previous was low, beginning of new pulse (second)
@@ -56,7 +57,6 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			ADD A,@R0				; add length of high level period
 			MOV R3,A				; back up A
 			MOV @R0,#0				; start measuring pulse width
-			;LOGA()
 			SUBI(TICKS*2+4)			; last pulse more than two seconds ago? (error)
 			JNC	_PRPERR				; yes, no incoming pulses error
 			MOV A,R3				; restore A
@@ -65,16 +65,16 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,R3				; restore A
 			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
 			JC _PRPUE1				; no, unable to decide (maybe state after transition)
-			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV R0,#PULSE_NEXT		; get address of pulse timeout
+			MOV @R0,#PULTIMOUT		; set max time allowed for next pulse to come
+_PRPUH3		MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,#PULSE_VALID		; set valid pulse
 			ORL A,@R0				; combine values
 			MOV @R0,A				; save new state
-			MOV R0,#PULSE_NEXT		; get address of pulse timeout
-			MOV @R0,#PULTIMOUT		; set max time allowed for next pulse to come
 _PRPUE1		RET
 _PRPUE2		MOV R0,#BIT_NUM			; address of bit number
 			MOV A,@R0				; get bit number
-			SUBI(58)				; sec.58 is latest?
+			SUBI(58)				; is it sec.58? (it has no real end, as sec.59 is all zero)
 			JNZ _PRPUE1				; no, return
 			MOV R0,#CURR_STAT		; get address of current state variable
 			MOV A,@R0				; get state (PULSE_ZERO or PULSE_ONE)
@@ -84,11 +84,8 @@ _PRPUE2		MOV R0,#BIT_NUM			; address of bit number
 			ADD A,@R0				; add length of high level period
 			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
 			JC _PRPUE1				; no, unable to decide (maybe state after transition)
-			MOV R0,#CURR_STAT		; get address of current state variable
-			MOV A,#PULSE_VALID		; set valid pulse (sec.59)
-			ORL A,@R0				; combine values
-			MOV @R0,A				; save new state
-			RET
+			JMP _PRPUH3				; set valid pulse for sec.58 now, as sec.59 never pulses(syntetize pulse end)
+			; current period (nibble) is zero
 _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(2)					; number of ones in previous 100ms period less then 2?
@@ -96,10 +93,10 @@ _PRPUL1		INC @R0					; increment length variable address
 			MOV A,R4				; restore count of previous four samples
 			SUBI(3)					; is count above 2 (3 or 4)?
 			JC _PRPUI1				; no, unable to decide (noise or in transition so ignore it)
-			MOV A,@R0				; get pulse length
-			SUBI(10)				; is count above 9?
-			JC _PRPUL3				; high level duration is not too long
-_PRPERR		JMP DECERR				; set error
+			MOV A,@R0				; end of high level, get pulse length
+			SUBI(10)				; is count above 9? (error - pulse much too long)
+			JC _PRPUL3				; it is OK, high level duration is not too long
+_PRPERR		JMP DECERR				; set error(pulse high too long))
 _PRPUL3		MOV A,@R0				; get pulse length
 			SUBI(6)					; is count above 5?
 			MOV R0,#CURR_STAT		; get address of current state variable
