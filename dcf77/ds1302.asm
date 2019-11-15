@@ -68,7 +68,7 @@ SSCLK		CLR A					; clear A
 			;
 			; read clock and set cpu register time
 RDCLK		MOV R1,#DS_HOUR			; get hours register address to R1
-			CALL DSRC_REG			; set hours
+			CALL DSRC_REG			; get hours
 			MOV R0,#HOUR			; clock time hours
 			MOV @R0,A				; set time hours
 			MOV R1,#DS_MIN			; get minutes register address to R1

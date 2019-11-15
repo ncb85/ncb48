@@ -56,10 +56,11 @@ _PRPUH2		MOV R0,#CURR_STAT		; get address of current state variable
 			ADD A,@R0				; add length of high level period
 			MOV R3,A				; back up A
 			MOV @R0,#0				; start measuring pulse width
+			;LOGA()
 			SUBI(TICKS*2+4)			; last pulse more than two seconds ago? (error)
 			JNC	_PRPERR				; yes, no incoming pulses error
 			MOV A,R3				; restore A
-			SUBI(TICKS*2-4)			; previous pulse two seconds ago? (sec.59)
+			SUBI(TICKS*2-8)			; previous pulse two seconds ago? (sec.59)
 			JNC	_PRPLST				; yes, it is last second nr.59
 			MOV A,R3				; restore A
 			SUBI(LOW_LEN)			; zero level present longer then 800ms? (completed pulse)
@@ -119,6 +120,7 @@ _PRPLST		MOV R0,#PULSE_LEN		; address of pulse length variable
 			MOV @R0,A				; save new state
 			MOV A,#4				; compensate shift register delay
 			MOV R6,A				; preset ticks
+			LOGI(l)
 _PRPUI1		RET						; return
 			;
 			; decrement time to wait for a pulse (approx 1.1sec)

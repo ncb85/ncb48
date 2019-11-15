@@ -66,14 +66,13 @@ _DECH1		MOV A,R4				; restore bit number
 			INC R0					; get address of minutes digit to R0
 			JC _DECM1				; no, try minutes
 			JZ _DECPA				; minutes parity bit
-			DEC R0					; return address of hours digit to R0
+			DEC R0					; revert address of hours digit to R0
 			DEC A					; adjust (hours >= bit nr.29)
 			JMP SETBIT				; update hours digits
 _DECM1		MOV A,R4				; restore bit number
 			SUBI(21)				; less than 21?
 			JC _DECEND				; yes, ignore
-			CALL SETBIT				; update minutes digits
-			RET						; return
+			JMP SETBIT				; update minutes digits
 _DECPA		MOV A,@R0				; get hours digit
 			LOGI(p) \ LOGA()
 			CALL BCCNSB				; count ones
@@ -101,8 +100,7 @@ _DECP2		MOV A,R4				; restore bit number
 			JB2 _DECEND				; return on previous error(s)
 			MOV A,#TIME_VAL			; flag radio time valid
 			JMP _DECSTA				; set state
-DECERR		LOGA()
-			MOV A,#PULSE_ERR		; set error flag for radio frame
+DECERR		MOV A,#PULSE_ERR		; set error flag for radio frame
 _DECSTA		MOV R0,#CURR_STAT		; get address of status
 	    	ORL A,@R0				; combine values
 			ANL A,#~ALLOWAIT		; clear flag for time checking between pulses

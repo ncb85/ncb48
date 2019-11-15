@@ -62,9 +62,9 @@ TIME_VAL	.EQU 40H				; radio time valid
 DISP_REFR	.EQU 80H				; refresh display
 			;
 			; display type
-MULPXD		.EQU 0					; 6x 74595 static
-STATIC		.EQU 1					; 2x 74595 column/row multiplexed
-DISPTYP		.EQU MULPXD
+MULPXD		.EQU 0					; 2x 74595 column/row multiplexed
+STATIC		.EQU 1					; 6x 74595 static
+DISPTYP		.EQU STATIC
 			;
 			.ORG BEGIN				; reset vector
 			JMP MAIN				; jump to main routine
@@ -94,6 +94,7 @@ MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			MOV @R0,A				; clear BIT_NUM
 			MOV R0,#POSITION		; get address of display position variable
 			MOV @R0,A				; clear POSITION
+			;CALL CLOC_INI			; clear time
 			CALL RDCLK				; set (cpu reg.) clock with time from DS1302
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
@@ -167,6 +168,7 @@ PART1S		.EQU $-BEGIN
 			.ORG BEGIN+3A0H
 PART2B
 			#INCLUDE "disNx595.asm"	; seven segment display
+			;#INCLUDE "disVFD6.asm"		; seven segment display
 #ELSE
 			.ORG BEGIN+3A0H
 PART2B
