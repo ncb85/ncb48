@@ -85,17 +85,9 @@ INTRPT		RETR 					; restore PC and PSW
 MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			ANL P1,#~DSCLK_PIN		; clear clock pin
 			LOGINI()
-			CLR A					; clear A
-			MOV R0,#CURR_STAT		; get address of current state variable
-			MOV @R0,A				; clear CURR_STAT
-			DEC R0					; PULSE_LEN
-			MOV @R0,A				; clear PULSE_LEN
-			DEC R0					; BIT_NUM
-			MOV @R0,A				; clear BIT_NUM
-			MOV R0,#POSITION		; get address of display position variable
-			MOV @R0,A				; clear POSITION
-			;CALL CLOC_INI			; clear time
-			CALL RDCLK				; set (cpu reg.) clock with time from DS1302
+			CALL CLOC_INI			; clear time variables
+			CALL MAX7219_INIT
+			;CALL RDCLK				; set (cpu reg.) clock with time from DS1302
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
 _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable
@@ -165,9 +157,10 @@ PART1S		.EQU $-BEGIN
 			#INCLUDE "debug.asm"	; DCF-77 decoder
 #ENDIF
 #IF DISPTYP==STATIC
-			.ORG BEGIN+3A0H
+			.ORG BEGIN+390H
 PART2B
-			#INCLUDE "disNx595.asm"	; seven segment display
+			#INCLUDE "max7219.asm"		; seven segment display
+			;#INCLUDE "disNx595.asm"	; seven segment display
 			;#INCLUDE "disVFD6.asm"		; seven segment display
 #ELSE
 			.ORG BEGIN+3A0H

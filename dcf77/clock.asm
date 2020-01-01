@@ -3,6 +3,27 @@
 			;
 			.MODULE CLOCK			; module name (for local _labels)
 			;
+			; initialize clock
+CLOC_INI	CLR A					; clear A
+			MOV R0,#CURR_STAT		; get address of current state variable
+			MOV @R0,A				; clear CURR_STAT
+			DEC R0					; PULSE_LEN
+			MOV @R0,A				; clear PULSE_LEN
+			DEC R0					; BIT_NUM
+			MOV @R0,A				; clear BIT_NUM
+			MOV R0,#POSITION		; get address of display position variable
+			MOV @R0,A				; clear POSITION
+			MOV R0,#HOUR			; hours address to R0
+			MOV @R0,A				; clear hours
+			INC R0					; R0 points to minutes
+			MOV @R0,A				; clear minutes
+			INC R0					; R0 points to seconds
+			MOV @R0,A				; clear seconds
+			SEL RB1					; swith to alternate register bank
+			MOV R6,A				; clear ticks
+			SEL RB0					; back to standard register bank
+			RET
+			;
 			; set decoded radio time as new clock time
 SETRADTIM	MOV R0,#RAD_HOU			; radio time hours
 			MOV R1,#HOUR			; clock time hours
@@ -35,6 +56,10 @@ CLOC_INT	INC R6					; ticks
 			XCH A,@R0				; refresh display once per second
 			ORL A,#DISP_REFR		; combine values
 			MOV @R0,A				; set CURR_STAT
+#ELSE
+			JMP _CONT1				; fill space
+			NOP \ NOP
+_CONT1		NOP
 #ENDIF
 			CLR A					; clear A
 			MOV R6,A				; clear ticks
