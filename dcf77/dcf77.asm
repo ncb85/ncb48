@@ -86,8 +86,10 @@ MAIN		ANL P1,#~DSCEN_PIN		; deactivate DS1302 - clear CE pin
 			ANL P1,#~DSCLK_PIN		; clear clock pin
 			LOGINI()
 			CALL CLOC_INI			; clear time variables
-			CALL MAX7219_INIT
-			;CALL RDCLK				; set (cpu reg.) clock with time from DS1302
+#IF DISPTYP==STATIC
+			CALL MAX7219_INIT		; init max7219
+#ENDIF
+			CALL RDCLK				; set (cpu reg.) clock with time from DS1302
 			STRT T					; start timer
 			EN TCNTI				; enable interrupt from timer
 _MAILOP		MOV R0,#CURR_STAT		; get address of current state variable

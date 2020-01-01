@@ -62,7 +62,8 @@ DISP_TIME	MOV R0,#SECOND			; seconds address to R0
 			ANL A,#0F0H				; first digit zero?
 			JNZ _DISP_TI1			; no, display two digits
 			ORL A,#0A0H		        ; space on first digit
-_DISP_TI1	CALL DISP_BCD			; display HH
+_DISP_TI1	ORL A,@R0				; move hours to A again
+			CALL DISP_BCD			; display HH
 			MOV R0,#CURR_STAT		; get address of current state variable
 			XCH A,@R0				; exchange values (set CURR_STAT)
 			ANL A,#~DISP_REFR		; clear refresh display flag
